@@ -1,0 +1,7 @@
+# Vim
+.*.swp
+.*.swo
+
+# Godot 4+ specific ignores
+.godot/
+/android/
