@@ -1,0 +1,35 @@
+[gd_scene load_steps=3 format=3 uid="uid://4ihi7y3cy0qy"]
+
+[ext_resource type="Script" uid="uid://bkidw66csykcx" path="res://game.gd" id="1_80nbo"]
+[ext_resource type="PackedScene" uid="uid://ddvjaaio3uxly" path="res://board.tscn" id="2_e2o6t"]
+
+[node name="Game" type="Control" node_paths=PackedStringArray("board", "scroll")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_80nbo")
+board = NodePath("ScrollContainer/CenterContainer/Board")
+scroll = NodePath("ScrollContainer")
+
+[node name="ScrollContainer" type="ScrollContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+horizontal_scroll_mode = 3
+vertical_scroll_mode = 3
+
+[node name="CenterContainer" type="CenterContainer" parent="ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Board" parent="ScrollContainer/CenterContainer" instance=ExtResource("2_e2o6t")]
+layout_mode = 2
+
+[connection signal="resized" from="." to="." method="_on_resized"]

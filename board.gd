@@ -1,4 +1,5 @@
 extends Control
+class_name Board
 
 @export var board_width: int = 20
 @export var board_height: int = 30
