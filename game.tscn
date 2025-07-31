@@ -11,25 +11,33 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_80nbo")
-board = NodePath("ScrollContainer/CenterContainer/Board")
-scroll = NodePath("ScrollContainer")
+board = NodePath("VBoxContainer/ScrollContainer/CenterContainer/Board")
+scroll = NodePath("VBoxContainer/ScrollContainer")
 
-[node name="ScrollContainer" type="ScrollContainer" parent="."]
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+
+[node name="Panel" type="Panel" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+
+[node name="ScrollContainer" type="ScrollContainer" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
 horizontal_scroll_mode = 3
 vertical_scroll_mode = 3
 
-[node name="CenterContainer" type="CenterContainer" parent="ScrollContainer"]
+[node name="CenterContainer" type="CenterContainer" parent="VBoxContainer/ScrollContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="Board" parent="ScrollContainer/CenterContainer" instance=ExtResource("2_e2o6t")]
+[node name="Board" parent="VBoxContainer/ScrollContainer/CenterContainer" instance=ExtResource("2_e2o6t")]
 layout_mode = 2
 
 [connection signal="resized" from="." to="." method="_on_resized"]
