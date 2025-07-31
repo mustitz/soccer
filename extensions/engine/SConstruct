@@ -1,0 +1,32 @@
+#!/usr/bin/env python3
+
+import os
+
+for dn in ('build', 'bin'):
+    if not os.path.exists(dn):
+        os.makedirs(dn)
+
+env = SConscript("../godot-cpp/SConstruct")
+
+platform, target, arch, suffix, ext = [
+    env[name] for name in ('platform', 'target', 'arch', 'suffix', 'SHLIBSUFFIX')
+]
+
+build_dn = f"build/{platform}-{target}-{arch}"
+if not os.path.exists(build_dn):
+    os.makedirs(build_dn)
+
+env.VariantDir(build_dn, 'paper-football/sources', duplicate=0)
+
+sources = [
+    "src/wrapper.cpp",
+    "src/bridge.c",
+    f"{build_dn}/utils.c",
+    f"{build_dn}/game.c",
+    ]
+
+env.Append(CPPPATH=["paper-football/include/"])
+
+library = env.SharedLibrary( f"bin/libengine{suffix}{ext}", source=sources)
+
+Default(library)

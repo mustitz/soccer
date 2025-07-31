@@ -1,0 +1,177 @@
+#include <godot_cpp/classes/ref_counted.hpp>
+#include <godot_cpp/core/class_db.hpp>
+#include <godot_cpp/godot.hpp>
+
+#include "bridge.hpp"
+
+using namespace godot;
+
+static Error from_errno(Error def) {
+   switch (errno) {
+        case ENOMEM: return ERR_OUT_OF_MEMORY;
+        case EINVAL: return ERR_INVALID_PARAMETER;
+        default: return def;
+    }
+}
+
+VARIANT_ENUM_CAST(GameStatus);
+VARIANT_ENUM_CAST(MoveState);
+VARIANT_ENUM_CAST(MoveDirection);
+
+class GameState : public RefCounted {
+   GDCLASS(GameState, RefCounted)
+
+private:
+    StateSnapshot snapshot;
+
+public:
+    GameState() {
+        snapshot = { GAME_INACTIVE };
+    }
+
+    void update(const State& state) {
+        state.write_snapshot(snapshot);
+    }
+
+    int get_status() const { return snapshot.status; }
+    int get_result() const { return snapshot.result; }
+    int get_active_player() const { return snapshot.active_player; }
+    int get_move_state() const { return snapshot.move_state; }
+
+    Vector2i get_ball_coords() const {
+        return Vector2i(snapshot.ball_coords[0], snapshot.ball_coords[1]);
+    }
+
+    PackedInt32Array get_possible_steps() const {
+        PackedInt32Array result;
+
+        result.resize(snapshot.qpossible_steps);
+        for (int i = 0; i < snapshot.qpossible_steps; i++) {
+            result[i] = snapshot.possible_steps[i];
+        }
+
+        return result;
+    }
+
+    static void _bind_methods() {
+        ClassDB::bind_method(D_METHOD("get_status"), &GameState::get_status);
+        ClassDB::bind_method(D_METHOD("get_result"), &GameState::get_result);
+        ClassDB::bind_method(D_METHOD("get_active_player"), &GameState::get_active_player);
+        ClassDB::bind_method(D_METHOD("get_ball_coords"), &GameState::get_ball_coords);
+        ClassDB::bind_method(D_METHOD("get_move_state"), &GameState::get_move_state);
+        ClassDB::bind_method(D_METHOD("get_possible_steps"), &GameState::get_possible_steps);
+
+        ADD_PROPERTY(PropertyInfo(Variant::INT, "status"), "", "get_status");
+        ADD_PROPERTY(PropertyInfo(Variant::INT, "result"), "", "get_result");
+        ADD_PROPERTY(PropertyInfo(Variant::INT, "active_player"), "", "get_active_player");
+        ADD_PROPERTY(PropertyInfo(Variant::VECTOR2I, "ball"), "", "get_ball_coords");
+        ADD_PROPERTY(PropertyInfo(Variant::INT, "move_state"), "", "get_move_state");
+        ADD_PROPERTY(PropertyInfo(Variant::PACKED_INT32_ARRAY, "possible_steps"), "", "get_possible_steps");
+    }
+};
+
+class EngineExtension : public RefCounted {
+    GDCLASS(EngineExtension, RefCounted)
+
+public:
+    EngineExtension() : state(nullptr) {}
+    ~EngineExtension() {
+        release();
+    }
+
+    void release() {
+        geometry = nullptr;
+        state = nullptr;
+    }
+
+    Error new_game(
+        const int width,
+        const int height,
+        const int goal_width,
+        const int free_kick_len
+    ) {
+        auto new_geometry = std::make_shared<StdGeometry>(width, height, goal_width, free_kick_len);
+        if (!new_geometry->is_valid()) {
+            return from_errno(ERR_CANT_CREATE);
+        }
+
+        auto new_state = std::make_unique<State>(new_geometry);
+        if (!new_state->is_valid()) {
+            return ERR_OUT_OF_MEMORY;
+        }
+
+        release();
+
+        geometry = std::move(new_geometry);
+        state = std::move(new_state);
+        return OK;
+    }
+
+    Ref<GameState> get_game_state() {
+        Ref<GameState> game_state;
+        game_state.instantiate();
+        game_state->update(*state);
+        return game_state;
+    }
+
+    Error step(int direction) {
+        if (!state) return ERR_UNCONFIGURED;
+
+        return state->step(direction) ? OK : ERR_INVALID_PARAMETER;
+    }
+
+    static void _bind_methods() {
+        BIND_ENUM_CONSTANT(GAME_FAILED);
+        BIND_ENUM_CONSTANT(GAME_IN_PROGRESS);
+        BIND_ENUM_CONSTANT(GAME_INACTIVE);
+
+        BIND_ENUM_CONSTANT(MOVE_STATE_INACTIVE);
+        BIND_ENUM_CONSTANT(MOVE_STATE_1);
+        BIND_ENUM_CONSTANT(MOVE_STATE_2);
+        BIND_ENUM_CONSTANT(MOVE_STATE_3);
+        BIND_ENUM_CONSTANT(MOVE_STATE_FREE_KICK);
+
+        BIND_ENUM_CONSTANT(DIRECTION_NW);
+        BIND_ENUM_CONSTANT(DIRECTION_N);
+        BIND_ENUM_CONSTANT(DIRECTION_NE);
+        BIND_ENUM_CONSTANT(DIRECTION_E);
+        BIND_ENUM_CONSTANT(DIRECTION_SE);
+        BIND_ENUM_CONSTANT(DIRECTION_S);
+        BIND_ENUM_CONSTANT(DIRECTION_SW);
+        BIND_ENUM_CONSTANT(DIRECTION_W);
+        BIND_ENUM_CONSTANT(DIRECTION_NONE);
+        BIND_ENUM_CONSTANT(QDIRECTIONS);
+
+        ClassDB::bind_method(D_METHOD(
+            "new_game", "width", "height", "goal_width", "free_kick_len"),
+            &EngineExtension::new_game);
+        ClassDB::bind_method(D_METHOD("get_game_state"), &EngineExtension::get_game_state);
+        ClassDB::bind_method(D_METHOD("step", "direction"), &EngineExtension::step);
+    }
+
+private:
+    std::shared_ptr<Geometry> geometry;
+    std::unique_ptr<State> state;
+};
+
+void initialize_engine_extension_module(ModuleInitializationLevel p_level) {
+    if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE) return;
+    ClassDB::register_class<EngineExtension>();
+    ClassDB::register_class<GameState>();
+}
+
+void uninitialize_engine_extension_module(ModuleInitializationLevel p_level) {}
+
+extern "C" {
+    GDExtensionBool GDE_EXPORT engine_extension_library_init(
+        GDExtensionInterfaceGetProcAddress p_get_proc_address,
+        const GDExtensionClassLibraryPtr p_library,
+        GDExtensionInitialization *r_initialization
+    ) {
+        GDExtensionBinding::InitObject init_obj(p_get_proc_address, p_library, r_initialization);
+        init_obj.register_initializer(initialize_engine_extension_module);
+        init_obj.register_terminator(uninitialize_engine_extension_module);
+        init_obj.set_minimum_library_initialization_level(MODULE_INITIALIZATION_LEVEL_SCENE);
+        return init_obj.init();
+    }
+}
