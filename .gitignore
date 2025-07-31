@@ -3,6 +3,7 @@
 .*.swo
 
 # Godot 4+ specific ignores
+*.uid
 .godot/
 /android/
 

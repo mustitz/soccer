@@ -7,6 +7,8 @@ const GameStep = GameTypes.GameStep
 
 @export var board_width: int = 20
 @export var board_height: int = 30
+@export var goal_width: int = 6
+
 @export var cell_width: int = 32
 @export var cell_height: int = 32
 @export var margin_width: int = 16
@@ -20,8 +22,18 @@ const GameStep = GameTypes.GameStep
 @export var grid_color: Color = Color.BLACK
 
 var history: Array[GameStep] = []
+var engine: EngineExtension
+
+func _init():
+	engine = EngineExtension.new()
 
 func _ready():
+	var result = engine.new_game(board_width + 1, board_height + 1, goal_width, 5)
+	if result != OK:
+		print("QAZQAZ Error: ", result)
+	else:
+		print("QAZQAZ OK!")
+
 	update_size()
 
 func update_size():
