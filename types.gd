@@ -1,6 +1,6 @@
 class_name GameTypes
 
-enum Direction { N, NE, E, SE, S, SW, W, NW }
+enum Direction { SW, S, SE, E, NE, N, NW, W }
 enum Player { RED, BLUE }
 
 class GameStep:

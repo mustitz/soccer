@@ -36,14 +36,17 @@ func _ready():
 		print("QAZQAZ OK!")
 
 	var state = engine.get_game_state()
+	dump_state(state)
+
+	update_size()
+
+func dump_state(state):
 	print("Status: ", state.status)
 	print("Result: ", state.result)
 	print("Active player: ", state.active_player)
 	print("Ball: ", state.ball)
 	print("Move state: ", state.move_state)
 	print("Possible steps: ", state.possible_steps)
-
-	update_size()
 
 func update_size():
 	var total_width = 2 * margin_width + board_width * cell_width
@@ -89,7 +92,6 @@ func draw_markup():
 
 	draw_circle(Vector2(cx, cy), 2 * border_thick, grid_color)
 	draw_line(Vector2(margin_width, cy), Vector2(right_x, cy), grid_color, border_thick)
-	print(margin_width, ", ", cy, " - ", right_x, ", ", cy)
 
 	var gw = goal_width * cell_width
 	var gx1 = cx - 0.5 * gw
@@ -120,6 +122,91 @@ func draw_history():
 		var color = Color.RED if step.player == Player.RED else Color.BLUE
 		draw_line(current_pos, end_pos, color, step_thick)
 		current_pos = end_pos
+
+func _gui_input(event):
+	if event is InputEventMouseButton:
+		if not event.pressed:
+			return
+		if event.button_index != MOUSE_BUTTON_LEFT:
+			return
+		return try_step(event.position)
+
+func try_step(p):
+	var sx = (p.x - margin_width) / cell_width
+	var sy = (p.y - margin_height) / cell_height
+
+	var frac_sx = sx - floor(sx)
+	var frac_sy = sy - floor(sy)
+
+	var bad_sx: bool = frac_sx > 0.33 and frac_sx < 0.66
+	var bad_sy: bool= frac_sy > 0.33 and frac_sy < 0.66
+	if bad_sx or bad_sy:
+		print("Ignore fuzzy click: frac_sx=", frac_sx, "; frac_sy=", frac_sy, ";")
+		return
+
+	var x: int = int(round(sx))
+	var y: int = int(round(sy))
+
+	if x < 0 or x > board_width or y < 0 or y > board_height:
+		print("Ignore click outsied board: x=", x, "; y=", y, ";")
+		return
+
+	var state = engine.get_game_state()
+	if state.move_state == engine.MOVE_STATE_INACTIVE:
+		print("Ignore click in inactive move state")
+		return
+
+	var ball_pos = state.ball
+
+	var dx: int = x - ball_pos.x
+	var dy: int = y - ball_pos.y
+	if dx == 0 and dy == 0:
+		print("Ignore click on ball")
+		return
+
+	var delta: int = 1
+	if state.move_state == engine.MOVE_STATE_FREE_KICK:
+		delta = free_kick_len
+
+	var bad_dx = dx != 0 and abs(dx) != delta
+	var bad_dy = dy != 0 and abs(dy) != delta
+	if bad_dx or bad_dy:
+		print("Ignore bad delta click: dx=", dx, "; dy=", dy, ";")
+		return
+
+	var direction: int = calc_direction(dx, dy)
+	if direction == engine.DIRECTION_NONE:
+		print("QAZQAZ: unexpected bad direction from calc_direction: dx=", dx, "; dy=", dy, ";")
+		return
+
+	if not direction in state.possible_steps:
+		print("Ignore forbidded move click")
+		return
+
+	var status = engine.step(direction)
+	if status != OK:
+		print("QAZQAZ: unexpected engine did not accept the step")
+		return
+
+	print("-- New State: ")
+	dump_state(engine.get_game_state())
+	print("--")
+
+	var length = max(abs(dx), abs(dy))
+	var player = Player.RED if state.active_player == 1 else Player.BLUE
+	add_step(direction, length, player)
+	queue_redraw()
+
+func calc_direction(dx: int, dy: int) -> int:
+	if dx < 0 and dy < 0: return engine.DIRECTION_NW
+	if dx == 0 and dy < 0: return engine.DIRECTION_N
+	if dx > 0 and dy < 0: return engine.DIRECTION_NE
+	if dx > 0 and dy == 0: return engine.DIRECTION_E
+	if dx > 0 and dy > 0: return engine.DIRECTION_SE
+	if dx == 0 and dy > 0: return engine.DIRECTION_S
+	if dx < 0 and dy > 0: return engine.DIRECTION_SW
+	if dx < 0 and dy == 0: return engine.DIRECTION_W
+	return engine.DIRECTION_NONE
 
 func get_step_end(start: Vector2, step: GameStep) -> Vector2:
 	var direction_vectors = {
