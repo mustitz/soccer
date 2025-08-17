@@ -15,10 +15,6 @@ func _ready():
 	board.cell_height = cell_size
 	board.update_size()
 
-	board.add_step(GameTypes.Direction.NE, 3, GameTypes.Player.RED)
-	board.add_step(GameTypes.Direction.S, 1, GameTypes.Player.BLUE)
-	board.add_step(GameTypes.Direction.SW, 2, GameTypes.Player.BLUE)
-
 func _input(event):
 	if event is InputEventScreenDrag:
 		scroll.scroll_horizontal -= event.relative.x
