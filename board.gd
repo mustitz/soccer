@@ -8,13 +8,14 @@ const GameStep = GameTypes.GameStep
 @export var board_width: int = 20
 @export var board_height: int = 30
 @export var goal_width: int = 6
+@export var free_kick_len: int = 5
 
 @export var cell_width: int = 32
 @export var cell_height: int = 32
 @export var margin_width: int = 16
 @export var margin_height: int = 16
 
-@export var border_thick: int = 2
+@export var border_thick: int = 3
 @export var grid_thick: int = 1
 @export var step_thick: int = 5
 
@@ -28,19 +29,11 @@ func _init():
 	engine = EngineExtension.new()
 
 func _ready():
-	var result = engine.new_game(board_width + 1, board_height + 1, goal_width, 5)
+	var result = engine.new_game(board_width + 1, board_height + 1, goal_width, free_kick_len)
 	if result != OK:
 		print("QAZQAZ Error: ", result)
 	else:
 		print("QAZQAZ OK!")
-
-	engine.step(engine.DIRECTION_S)
-	engine.step(engine.DIRECTION_S)
-	engine.step(engine.DIRECTION_S)
-
-	engine.step(engine.DIRECTION_NW)
-	engine.step(engine.DIRECTION_NW)
-	engine.step(engine.DIRECTION_E)
 
 	var state = engine.get_game_state()
 	print("Status: ", state.status)
@@ -66,6 +59,7 @@ func add_step(dir: Direction, length: int, player: Player):
 func _draw():
 	draw_rect(Rect2(Vector2.ZERO, size), bg_color)
 	draw_grid()
+	draw_markup()
 	draw_history()
 
 func draw_grid():
@@ -86,6 +80,35 @@ func draw_grid():
 		var to = Vector2(start_x + board_width * cell_width, line_y)
 		var thick = border_thick if (y == 0 or y == board_height) else grid_thick
 		draw_line(from, to, color, thick)
+
+func draw_markup():
+	var cx = margin_width + 0.5 * board_width * cell_width
+	var cy = margin_height + 0.5 * board_height * cell_height
+	var right_x = margin_width + board_width * cell_width
+	var bottom_y = margin_height + board_height * cell_height
+
+	draw_circle(Vector2(cx, cy), 2 * border_thick, grid_color)
+	draw_line(Vector2(margin_width, cy), Vector2(right_x, cy), grid_color, border_thick)
+	print(margin_width, ", ", cy, " - ", right_x, ", ", cy)
+
+	var gw = goal_width * cell_width
+	var gx1 = cx - 0.5 * gw
+
+	var top_goalkeeper_rect = Rect2(gx1, margin_height, gw, cell_height)
+	draw_rect(top_goalkeeper_rect, grid_color, false, border_thick)
+
+	var bottom_goalkeeper_rect = Rect2(gx1, bottom_y, gw, -cell_height)
+	draw_rect(bottom_goalkeeper_rect, grid_color, false, border_thick)
+
+	var halfy = 0.5 * board_height
+	if free_kick_len >= halfy:
+		return
+
+	var px1 = max(margin_width, gx1 - (free_kick_len - 1) * cell_width)
+	var pw = cell_width * (2 * free_kick_len + goal_width - 2)
+	var ph = free_kick_len * cell_height
+	draw_rect(Rect2(px1, margin_height, pw, ph), grid_color, false, border_thick)
+	draw_rect(Rect2(px1, bottom_y, pw, -ph), grid_color, false, border_thick)
 
 func draw_history():
 	var center_x = margin_width + 0.5 * board_width * cell_width
