@@ -53,6 +53,10 @@ func update_size():
 	var total_height = 2 * margin_height + board_height * cell_height
 	custom_minimum_size = Vector2(total_width, total_height)
 	size = Vector2(total_width, total_height)
+
+	const k = 1 / 64.0
+	$Ball.scale = k * Vector2(cell_width, cell_height)
+
 	queue_redraw()
 
 func add_step(dir: Direction, length: int, player: Player):
@@ -64,6 +68,7 @@ func _draw():
 	draw_grid()
 	draw_markup()
 	draw_history()
+	update_ball_position()
 
 func draw_grid():
 	var color = grid_color
@@ -221,3 +226,15 @@ func get_step_end(start: Vector2, step: GameStep) -> Vector2:
 	}
 	var dir_vec = direction_vectors[step.direction]
 	return start + dir_vec * step.length * cell_width
+
+func update_ball_position():
+	var state = engine.get_game_state()
+	var ball_pos = state.ball
+
+	$Ball.position = Vector2(
+		margin_width + (ball_pos.x - 1.6) * cell_width,
+		margin_height + (ball_pos.y - 1.6) * cell_height
+	)
+
+func _on_ball_animation_timeout() -> void:
+	$Ball.frame_coords.x = ($Ball.frame_coords.x + 1) % 8

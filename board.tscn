@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://ddvjaaio3uxly"]
+[gd_scene load_steps=3 format=3 uid="uid://ddvjaaio3uxly"]
 
 [ext_resource type="Script" uid="uid://dmhupbj4ghxlj" path="res://board.gd" id="1_p0ybc"]
+[ext_resource type="Texture2D" uid="uid://d105ftok6nb6k" path="res://assets/ball_spritesheet.png" id="2_psm7c"]
 
 [node name="Board" type="Control"]
 layout_mode = 3
@@ -8,3 +9,15 @@ anchors_preset = 0
 offset_right = 40.0
 offset_bottom = 40.0
 script = ExtResource("1_p0ybc")
+
+[node name="Ball" type="Sprite2D" parent="."]
+texture = ExtResource("2_psm7c")
+offset = Vector2(100, 100)
+hframes = 8
+vframes = 8
+
+[node name="BallAnimation" type="Timer" parent="."]
+wait_time = 0.33
+autostart = true
+
+[connection signal="timeout" from="BallAnimation" to="." method="_on_ball_animation_timeout"]
