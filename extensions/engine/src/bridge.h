@@ -33,7 +33,7 @@ enum MoveDirection {
     QDIRECTIONS = 8
 };
 
-struct StateSnapshot {
+struct Snapshot {
    enum GameStatus status;
    int result;
    int active_player;

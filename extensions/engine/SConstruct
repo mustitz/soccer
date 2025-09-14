@@ -23,6 +23,7 @@ sources = [
     "src/bridge.c",
     f"{build_dn}/utils.c",
     f"{build_dn}/game.c",
+    f"{build_dn}/mcts-ai.c",
     ]
 
 env.Append(CPPPATH=["paper-football/include/"])
