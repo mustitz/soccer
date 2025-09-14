@@ -74,8 +74,18 @@ class EngineExtension : public RefCounted {
     GDCLASS(EngineExtension, RefCounted)
 
 public:
-    EngineExtension() : ai(nullptr) {}
+    EngineExtension() : ai(nullptr) {
+        thinker = std::thread(&EngineExtension::think_loop, this);
+    }
+
     ~EngineExtension() {
+        {
+            std::lock_guard<std::mutex> lock(mutex);
+            basta = true;
+        }
+        cv.notify_one();
+        thinker.join();
+
         release();
     }
 
@@ -132,7 +142,19 @@ public:
         return ai->go();
     }
 
+    void start_thinking() {
+        if (!ai) return;
+
+        std::lock_guard<std::mutex> lock(mutex);
+        if (busy) return;
+
+        busy = true;
+        cv.notify_one();
+    }
+
     static void _bind_methods() {
+        ADD_SIGNAL(MethodInfo("thinking_done", PropertyInfo(Variant::INT, "direction")));
+
         BIND_ENUM_CONSTANT(GAME_FAILED);
         BIND_ENUM_CONSTANT(GAME_IN_PROGRESS);
         BIND_ENUM_CONSTANT(GAME_INACTIVE);
@@ -161,11 +183,37 @@ public:
         ClassDB::bind_method(D_METHOD("step", "direction"), &EngineExtension::step);
         ClassDB::bind_method(D_METHOD("undo"), &EngineExtension::undo);
         ClassDB::bind_method(D_METHOD("go"), &EngineExtension::go);
+        ClassDB::bind_method(D_METHOD("start_thinking"), &EngineExtension::start_thinking);
     }
 
 private:
     std::shared_ptr<Geometry> geometry;
     std::unique_ptr<AI> ai;
+
+    std::thread thinker;
+    std::condition_variable cv;
+    std::mutex mutex;
+    bool busy{false};
+    bool basta{false};
+
+    void think_loop() {
+        for (;;) {
+            {
+                std::unique_lock<std::mutex> lock(mutex);
+                cv.wait(lock, [this]{ return busy || basta; });
+                if (basta) break;
+            }
+
+            int result = ai->go();
+
+            {
+                std::lock_guard<std::mutex> lock(mutex);
+                busy = false;
+            }
+
+            call_deferred("emit_signal", "thinking_done", result);
+        }
+    }
 };
 
 void initialize_engine_extension_module(ModuleInitializationLevel p_level) {
