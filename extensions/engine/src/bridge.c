@@ -83,3 +83,22 @@ int ai_step(void * ai_handle, int direction) {
     struct ai * ai = (struct ai *)ai_handle;
     return ai->do_step(ai, direction);
 }
+
+int ai_undo(void * ai_handle) {
+    if (!ai_handle) {
+        return -1;
+    }
+
+    struct ai * ai = (struct ai *)ai_handle;
+    return ai->undo_step(ai);
+}
+
+int ai_go(void * ai_handle) {
+    if (!ai_handle) {
+        return -1;
+    }
+
+    struct ai * ai = (struct ai *)ai_handle;
+    enum step result = ai->go(ai, NULL);
+    return (int)result;
+}

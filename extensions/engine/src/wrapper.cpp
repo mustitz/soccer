@@ -120,6 +120,18 @@ public:
         return ai->step(direction) ? OK : ERR_INVALID_PARAMETER;
     }
 
+    Error undo() {
+        if (!ai) return ERR_UNCONFIGURED;
+
+        return ai->undo() ? OK : ERR_INVALID_PARAMETER;
+    }
+
+    int go() {
+        if (!ai) return -1;
+
+        return ai->go();
+    }
+
     static void _bind_methods() {
         BIND_ENUM_CONSTANT(GAME_FAILED);
         BIND_ENUM_CONSTANT(GAME_IN_PROGRESS);
@@ -147,6 +159,8 @@ public:
             &EngineExtension::new_game);
         ClassDB::bind_method(D_METHOD("get_game_state"), &EngineExtension::get_game_state);
         ClassDB::bind_method(D_METHOD("step", "direction"), &EngineExtension::step);
+        ClassDB::bind_method(D_METHOD("undo"), &EngineExtension::undo);
+        ClassDB::bind_method(D_METHOD("go"), &EngineExtension::go);
     }
 
 private:
