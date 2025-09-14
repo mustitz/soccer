@@ -18,19 +18,19 @@ VARIANT_ENUM_CAST(GameStatus);
 VARIANT_ENUM_CAST(MoveState);
 VARIANT_ENUM_CAST(MoveDirection);
 
-class GameState : public RefCounted {
-   GDCLASS(GameState, RefCounted)
+class State : public RefCounted {
+   GDCLASS(State, RefCounted)
 
 private:
-    StateSnapshot snapshot;
+    Snapshot snapshot;
 
 public:
-    GameState() {
+    State() {
         snapshot = { GAME_INACTIVE };
     }
 
-    void update(const State& state) {
-        state.write_snapshot(snapshot);
+    void update(const AI& ai) {
+        ai.write_snapshot(snapshot);
     }
 
     int get_status() const { return snapshot.status; }
@@ -54,12 +54,12 @@ public:
     }
 
     static void _bind_methods() {
-        ClassDB::bind_method(D_METHOD("get_status"), &GameState::get_status);
-        ClassDB::bind_method(D_METHOD("get_result"), &GameState::get_result);
-        ClassDB::bind_method(D_METHOD("get_active_player"), &GameState::get_active_player);
-        ClassDB::bind_method(D_METHOD("get_ball_coords"), &GameState::get_ball_coords);
-        ClassDB::bind_method(D_METHOD("get_move_state"), &GameState::get_move_state);
-        ClassDB::bind_method(D_METHOD("get_possible_steps"), &GameState::get_possible_steps);
+        ClassDB::bind_method(D_METHOD("get_status"), &State::get_status);
+        ClassDB::bind_method(D_METHOD("get_result"), &State::get_result);
+        ClassDB::bind_method(D_METHOD("get_active_player"), &State::get_active_player);
+        ClassDB::bind_method(D_METHOD("get_ball_coords"), &State::get_ball_coords);
+        ClassDB::bind_method(D_METHOD("get_move_state"), &State::get_move_state);
+        ClassDB::bind_method(D_METHOD("get_possible_steps"), &State::get_possible_steps);
 
         ADD_PROPERTY(PropertyInfo(Variant::INT, "status"), "", "get_status");
         ADD_PROPERTY(PropertyInfo(Variant::INT, "result"), "", "get_result");
@@ -74,14 +74,14 @@ class EngineExtension : public RefCounted {
     GDCLASS(EngineExtension, RefCounted)
 
 public:
-    EngineExtension() : state(nullptr) {}
+    EngineExtension() : ai(nullptr) {}
     ~EngineExtension() {
         release();
     }
 
     void release() {
         geometry = nullptr;
-        state = nullptr;
+        ai = nullptr;
     }
 
     Error new_game(
@@ -95,29 +95,29 @@ public:
             return from_errno(ERR_CANT_CREATE);
         }
 
-        auto new_state = std::make_unique<State>(new_geometry);
-        if (!new_state->is_valid()) {
+        auto new_ai = std::make_unique<AI>(new_geometry);
+        if (!new_ai->is_valid()) {
             return ERR_OUT_OF_MEMORY;
         }
 
         release();
 
         geometry = std::move(new_geometry);
-        state = std::move(new_state);
+        ai = std::move(new_ai);
         return OK;
     }
 
-    Ref<GameState> get_game_state() {
-        Ref<GameState> game_state;
+    Ref<State> get_game_state() {
+        Ref<State> game_state;
         game_state.instantiate();
-        game_state->update(*state);
+        game_state->update(*ai);
         return game_state;
     }
 
     Error step(int direction) {
-        if (!state) return ERR_UNCONFIGURED;
+        if (!ai) return ERR_UNCONFIGURED;
 
-        return state->step(direction) ? OK : ERR_INVALID_PARAMETER;
+        return ai->step(direction) ? OK : ERR_INVALID_PARAMETER;
     }
 
     static void _bind_methods() {
@@ -151,13 +151,13 @@ public:
 
 private:
     std::shared_ptr<Geometry> geometry;
-    std::unique_ptr<State> state;
+    std::unique_ptr<AI> ai;
 };
 
 void initialize_engine_extension_module(ModuleInitializationLevel p_level) {
     if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE) return;
     ClassDB::register_class<EngineExtension>();
-    ClassDB::register_class<GameState>();
+    ClassDB::register_class<State>();
 }
 
 void uninitialize_engine_extension_module(ModuleInitializationLevel p_level) {}

@@ -13,17 +13,16 @@ extern "C" {
         const int penalty_len);
     void destroy_geometry(void * handle);
 
-    void * create_state(void * geometry);
-    void destroy_state(void * state);
-    int state_step(void * state, int direction);
-
-    int c_get_state(void * state, struct StateSnapshot * c_state);
+    void * create_ai(void * geometry);
+    void destroy_ai(void * ai);
+    int ai_get_snapshot(void * ai, struct Snapshot * c_state);
+    int ai_step(void * ai, int direction);
 }
 
 
 
 class Geometry {
-    friend class State;
+    friend class AI;
 public:
     Geometry() : _handle(nullptr) {}
     virtual ~Geometry() {
@@ -88,27 +87,24 @@ private:
 
 
 
-class State {
+class AI {
 public:
-    State(std::shared_ptr<Geometry> geometry):
-        _geometry(geometry),
-        _handle(nullptr)
-    {
+    AI(std::shared_ptr<Geometry> geometry) : _geometry(geometry), _handle(nullptr) {
         if (_geometry && _geometry->is_valid()) {
-            _handle = create_state(_geometry->_handle);
+            _handle = create_ai(_geometry->_handle);
         }
     }
 
-    ~State() {
+    ~AI() {
         if (_handle) {
-            destroy_state(_handle);
+            destroy_ai(_handle);
         }
     }
 
     bool is_valid() const { return _handle != nullptr; }
 
-    void write_snapshot(StateSnapshot& snapshot) const {
-        int ok = c_get_state(_handle, &snapshot);
+    void write_snapshot(Snapshot& snapshot) const {
+        int ok = ai_get_snapshot(_handle, &snapshot);
         if (!ok) {
             snapshot.status = GAME_FAILED;
             return;
@@ -124,17 +120,12 @@ public:
             return false;
         }
 
-        int ball = state_step(_handle, direction);
-        if (ball == NO_WAY) {
-            return false;
-        }
-
-        return true;
+        return ai_step(_handle, direction) == 0;
     }
 
 private:
-   std::shared_ptr<Geometry> _geometry;
-   void * _handle;
+    std::shared_ptr<Geometry> _geometry;
+    void * _handle;
 };
 
 #endif
