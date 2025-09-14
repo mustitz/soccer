@@ -4,6 +4,9 @@
 #include "bridge.h"
 
 #include <utility>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 
 extern "C" {
     void * create_std_geometry(

@@ -40,6 +40,8 @@ func _ready():
 
 	update_size()
 
+	engine.thinking_done.connect(_on_thinking_done)
+
 func dump_state(state):
 	print("Status: ", state.status)
 	print("Result: ", state.result)
@@ -238,3 +240,9 @@ func update_ball_position():
 
 func _on_ball_animation_timeout() -> void:
 	$Ball.frame_coords.x = ($Ball.frame_coords.x + 1) % 8
+
+func _on_thinking_done(direction: int):
+	print("QAZWSX AI thinking complete, suggested move: ", direction)
+	engine.step(direction)
+	update_ball_position()
+	queue_redraw()
