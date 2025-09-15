@@ -25,6 +25,23 @@ const GameStep = GameTypes.GameStep
 var history: Array[GameStep] = []
 var engine: EngineExtension
 
+enum Agent { NONE, USER, AI }
+var player1: Agent = Agent.USER
+var player2: Agent = Agent.AI
+
+func get_current_agent() -> Agent:
+	var state = engine.get_game_state()
+	if state.status != engine.GAME_IN_PROGRESS:
+		return Agent.NONE
+
+	match state.active_player:
+		1:
+			return player1
+		2:
+			return player2
+		_:
+			return Agent.NONE
+
 func _init():
 	engine = EngineExtension.new()
 
@@ -139,6 +156,17 @@ func _gui_input(event):
 		return try_step(event.position)
 
 func try_step(p):
+	var agent = get_current_agent()
+	if agent == Agent.NONE:
+		print("Ignore click, game over")
+		return
+
+	if agent == Agent.AI:
+		print("Ignore click, AI is thinking")
+		return
+
+	var state = engine.get_game_state()
+
 	var sx = (p.x - margin_width) / cell_width
 	var sy = (p.y - margin_height) / cell_height
 
@@ -158,7 +186,6 @@ func try_step(p):
 		print("Ignore click outsied board: x=", x, "; y=", y, ";")
 		return
 
-	var state = engine.get_game_state()
 	if state.move_state == engine.MOVE_STATE_INACTIVE:
 		print("Ignore click in inactive move state")
 		return
@@ -187,22 +214,10 @@ func try_step(p):
 		return
 
 	if not direction in state.possible_steps:
-		print("Ignore forbidded move click")
+		print("Ignore forbidden move click")
 		return
 
-	var status = engine.step(direction)
-	if status != OK:
-		print("QAZQAZ: unexpected engine did not accept the step")
-		return
-
-	print("-- New State: ")
-	dump_state(engine.get_game_state())
-	print("--")
-
-	var length = max(abs(dx), abs(dy))
-	var player = Player.RED if state.active_player == 1 else Player.BLUE
-	add_step(direction, length, player)
-	queue_redraw()
+	do_move(direction)
 
 func calc_direction(dx: int, dy: int) -> int:
 	if dx < 0 and dy < 0: return engine.DIRECTION_NW
@@ -241,8 +256,29 @@ func update_ball_position():
 func _on_ball_animation_timeout() -> void:
 	$Ball.frame_coords.x = ($Ball.frame_coords.x + 1) % 8
 
-func _on_thinking_done(direction: int):
-	print("QAZWSX AI thinking complete, suggested move: ", direction)
-	engine.step(direction)
+func do_move(direction: int):
+	var pre_state = engine.get_game_state()
+	var length = 1
+	if pre_state.move_state == engine.MOVE_STATE_FREE_KICK:
+		length = free_kick_len
+	var player = Player.RED if pre_state.active_player == 1 else Player.BLUE
+
+	var status = engine.step(direction)
+	if status != OK:
+		print("Invalid move!")
+		return
+
+	add_step(direction, length, player)
+
+	var state = engine.get_game_state()
 	update_ball_position()
 	queue_redraw()
+
+	if state.move_state != engine.MOVE_STATE_INACTIVE:
+		var agent = get_current_agent()
+		if agent == Agent.AI:
+			engine.start_thinking()
+
+func _on_thinking_done(direction: int):
+	print("QAZWSX AI thinking complete, suggested move: ", direction)
+	do_move(direction)
