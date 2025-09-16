@@ -332,7 +332,25 @@ func get_step_end(start: Vector2, step: GameStep) -> Vector2:
 	var delta = get_delta(step.direction)
 	if view == View.FLIPPED:
 		delta.y = -delta.y
-	return start + Vector2(delta) * step.length * cell_width
+
+	var length = step.length
+	var result = start + Vector2(delta) * length * cell_width
+
+	var x0 = margin_width + cell_width
+	var y0 = margin_height + cell_height
+	var y1 = y0 - 0.5 * cell_height
+	var y2 = y0 + (board_height + 0.5) * cell_height
+
+	if result.y >= y1 and result.y <= y2:
+		return result
+
+	var k: float
+	if result.y < y1:
+		k = (y1 - start.y) / (result.y - start.y)
+	else:
+		k = (y2 - start.y) / (result.y - start.y)
+
+	return start + k * Vector2(delta) * length * cell_width
 
 func update_ball_position():
 	var state = engine.get_game_state()
