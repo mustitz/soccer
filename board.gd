@@ -91,6 +91,11 @@ func _ready():
 
 	engine.thinking_done.connect(_on_thinking_done)
 
+	if state.move_state != engine.MOVE_STATE_INACTIVE:
+		var agent = get_current_agent()
+		if agent == Agent.AI:
+			engine.start_thinking()
+
 func dump_state(state):
 	print("Status: ", state.status)
 	print("Result: ", state.result)
@@ -115,14 +120,14 @@ func update_size():
 	if goal1 != null:
 		goal1.scale = kgoal * Vector2(cell_width, cell_height)
 		goal1.position = Vector2(
-			x0 + (board_width / 2 - goal_width / 2) * cell_width,
+			x0 + 0.5 * (board_width - goal_width) * cell_width,
 			y0 - cell_height
 		)
 
 	if goal2 != null:
 		goal2.scale = kgoal * Vector2(cell_width, cell_height)
 		goal2.position = Vector2(
-			x0 + (board_width / 2 - goal_width / 2) * cell_width,
+			x0 + 0.5 * (board_width - goal_width) * cell_width,
 			y0 + board_height * cell_height
 		)
 
@@ -274,8 +279,8 @@ func try_goal(p) -> bool:
 	if y0 <= p.y and p.y <= y0 + board_height * cell_height:
 		return false
 
-	var x1 = x0 + (board_width / 2 - goal_width / 2) * cell_width
-	var x2 = x0 + (board_width / 2 + goal_width / 2) * cell_width
+	var x1 = x0 + 0.5 * (board_width - goal_width) * cell_width
+	var x2 = x0 + 0.5 * (board_width + goal_width) * cell_width
 
 	if p.x < x1 or p.x > x2:
 		return false
@@ -342,9 +347,6 @@ func find_nearest_option(p: Vector2, options: Array):
 			min_dist = dist
 			closest = option
 	return closest
-
-func try_goal2(p) -> bool:
-	return false
 
 func try_step(p):
 	var agent = get_current_agent()
@@ -434,7 +436,6 @@ func get_step_end(start: Vector2, step: GameStep) -> Vector2:
 	var length = step.length
 	var result = start + Vector2(delta) * length * cell_width
 
-	var x0 = margin_width + cell_width
 	var y0 = margin_height + cell_height
 	var y1 = y0 - 0.5 * cell_height
 	var y2 = y0 + (board_height + 0.5) * cell_height
