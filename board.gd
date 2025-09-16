@@ -231,8 +231,24 @@ func draw_free_kick_hints():
 
 		var dest_x = ball_pos.x + delta.x
 		var dest_y = ball_pos.y + delta.y
+
+		var y1 = -0.5
+		var y2 = board_height + 0.5
+
+		if dest_y < y1 or dest_y > y2:
+			var k: float
+			if dest_y < y1:
+				k = (y1 - ball_pos.y) / (dest_y - ball_pos.y)
+			else:
+				k = (y2 - ball_pos.y) / (dest_y - ball_pos.y)
+			dest_x = ball_pos.x + k * delta.x
+			dest_y = ball_pos.y + k * delta.y
+
 		var screen_x = x0 + (dest_x - 1.6) * cell_width
-		var screen_y = y0 + (flip_y(dest_y) - 1.6) * cell_height
+		var flipped_y = dest_y
+		if view == View.FLIPPED:
+			flipped_y = board_height - dest_y
+		var screen_y = y0 + (flipped_y - 1.6) * cell_height
 
 		if free_kick_hints[direction] == null:
 			var hint_ball = $Ball.duplicate()
