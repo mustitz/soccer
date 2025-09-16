@@ -1,5 +1,6 @@
-# Ignore generated PNG files
+# Ignore generated files
 *.png
+*.import
 
 # Ignore PDFs
 *.pdf
