@@ -27,6 +27,7 @@ enum View { NORMAL, FLIPPED }
 
 var history: Array[GameStep] = []
 var engine: EngineExtension
+var free_kick_hints: Array = [null, null, null, null, null, null, null, null]
 
 enum Agent { NONE, USER, AI }
 var player1: Agent = Agent.USER
@@ -95,6 +96,7 @@ func _draw():
 	draw_grid()
 	draw_markup()
 	draw_history()
+	draw_free_kick_hints()
 	update_ball_position()
 
 func draw_grid():
@@ -154,6 +156,53 @@ func draw_history():
 		var color = Color.RED if step.player == Player.RED else Color.BLUE
 		draw_line(current_pos, end_pos, color, step_thick)
 		current_pos = end_pos
+
+func clear_free_kick_hints():
+	for i in range(8):
+		if free_kick_hints[i] != null:
+			free_kick_hints[i].queue_free()
+			free_kick_hints[i] = null
+
+func draw_free_kick_hints():
+	var state = engine.get_game_state()
+	if state.status != engine.GAME_IN_PROGRESS or get_current_agent() != Agent.USER or state.move_state != engine.MOVE_STATE_FREE_KICK:
+		clear_free_kick_hints()
+		return
+
+	var ball_pos = state.ball
+
+	for direction in range(8):
+		if direction not in state.possible_steps:
+			if free_kick_hints[direction] != null:
+				free_kick_hints[direction].queue_free()
+				free_kick_hints[direction] = null
+			continue
+
+		var dx = 0
+		var dy = 0
+		match direction:
+			engine.DIRECTION_NW: dx = -free_kick_len; dy = -free_kick_len
+			engine.DIRECTION_N:  dx = 0; dy = -free_kick_len
+			engine.DIRECTION_NE: dx = +free_kick_len; dy = -free_kick_len
+			engine.DIRECTION_E:  dx = +free_kick_len; dy = 0
+			engine.DIRECTION_SE: dx = +free_kick_len; dy = +free_kick_len
+			engine.DIRECTION_S:  dx = 0; dy = +free_kick_len
+			engine.DIRECTION_SW: dx = -free_kick_len; dy = +free_kick_len
+			engine.DIRECTION_W:  dx = -free_kick_len; dy = 0
+
+		var dest_x = ball_pos.x + dx
+		var dest_y = ball_pos.y + dy
+		var screen_x = margin_width + (dest_x - 1.6) * cell_width
+		var screen_y = margin_height + (flip_y(dest_y) - 1.6) * cell_height
+
+		if free_kick_hints[direction] == null:
+			var hint_ball = $Ball.duplicate()
+			hint_ball.modulate = Color(1.0, 1.0, 1.0, 0.5)
+			hint_ball.frame_coords = Vector2i(randi() % 8, randi() % 8)
+			add_child(hint_ball)
+			free_kick_hints[direction] = hint_ball
+
+		free_kick_hints[direction].position = Vector2(screen_x, screen_y)
 
 func _gui_input(event):
 	if event is InputEventMouseButton:
