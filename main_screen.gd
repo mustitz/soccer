@@ -1,7 +1,19 @@
 extends Control
 
 func _ready():
+	setup_window_size()
 	setup_adaptive_ui()
+
+func setup_window_size():
+	var os_name = OS.get_name()
+	var is_desktop = os_name == "macOS" or os_name == "Windows" or os_name == "Linux"
+	if is_desktop:
+		var screen_size = DisplayServer.screen_get_size()
+		var height = int(0.8 * screen_size.y)
+		var width = int(0.666 * height)
+		var wnd = get_window()
+		wnd.size = Vector2i(width, height)
+		wnd.move_to_center()
 
 func _on_new_game_btn_pressed() -> void:
 	get_tree().change_scene_to_file("res://game.tscn")
