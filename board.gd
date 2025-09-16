@@ -22,6 +22,9 @@ const GameStep = GameTypes.GameStep
 @export var bg_color: Color = Color.GRAY
 @export var grid_color: Color = Color.BLACK
 
+enum View { NORMAL, FLIPPED }
+@export var view: View = View.FLIPPED
+
 var history: Array[GameStep] = []
 var engine: EngineExtension
 
@@ -41,6 +44,11 @@ func get_current_agent() -> Agent:
 			return player2
 		_:
 			return Agent.NONE
+
+func flip_y(y: int) -> int:
+	if view == View.FLIPPED:
+		return board_height - y
+	return y
 
 func _init():
 	engine = EngineExtension.new()
@@ -193,7 +201,7 @@ func try_step(p):
 	var ball_pos = state.ball
 
 	var dx: int = x - ball_pos.x
-	var dy: int = y - ball_pos.y
+	var dy: int = flip_y(y) - ball_pos.y
 	if dx == 0 and dy == 0:
 		print("Ignore click on ball")
 		return
@@ -242,6 +250,8 @@ func get_step_end(start: Vector2, step: GameStep) -> Vector2:
 		Direction.NW: Vector2(-1, -1),
 	}
 	var dir_vec = direction_vectors[step.direction]
+	if view == View.FLIPPED:
+		dir_vec.y = -dir_vec.y
 	return start + dir_vec * step.length * cell_width
 
 func update_ball_position():
@@ -250,7 +260,7 @@ func update_ball_position():
 
 	$Ball.position = Vector2(
 		margin_width + (ball_pos.x - 1.6) * cell_width,
-		margin_height + (ball_pos.y - 1.6) * cell_height
+		margin_height + (flip_y(ball_pos.y) - 1.6) * cell_height
 	)
 
 func _on_ball_animation_timeout() -> void:
