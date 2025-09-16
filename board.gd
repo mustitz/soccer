@@ -267,6 +267,85 @@ func _gui_input(event):
 			return
 		return try_step(event.position)
 
+func try_goal(p) -> bool:
+	var x0 = margin_width + cell_width
+	var y0 = margin_height + cell_height
+
+	if y0 <= p.y and p.y <= y0 + board_height * cell_height:
+		return false
+
+	var x1 = x0 + (board_width / 2 - goal_width / 2) * cell_width
+	var x2 = x0 + (board_width / 2 + goal_width / 2) * cell_width
+
+	if p.x < x1 or p.x > x2:
+		return false
+
+	if p.y < y0 - 1.5 * cell_height:
+		return false
+
+	if p.y > y0 + (board_height + 1.5) * cell_height:
+		return false
+
+	var state = engine.get_game_state()
+	var min_dist = INF
+	var best = -1
+
+	for direction in state.possible_steps:
+		var length = 1
+		if state.move_state == engine.MOVE_STATE_FREE_KICK:
+			length = free_kick_len
+
+		var delta = length * get_delta(direction)
+		var dest_x = state.ball.x + delta.x
+		var dest_y = state.ball.y + delta.y
+
+		var k: float
+		if dest_y < 0:
+			k = (-0.5 - state.ball.y) / delta.y
+		elif dest_y > board_height:
+			k = (board_height + 0.5 - state.ball.y) / delta.y
+		else:
+			continue
+
+		dest_x = state.ball.x + k * delta.x
+		dest_y = state.ball.y + k * delta.y
+
+		var flipped_y = dest_y
+		if view == View.FLIPPED:
+			flipped_y = board_height - dest_y
+
+		var screen_pos = Vector2(
+			x0 + dest_x * cell_width,
+			y0 + flipped_y * cell_height
+		)
+
+		if abs(screen_pos.y - p.y) > 2 * cell_height:
+			continue
+
+		var dist = p.distance_to(screen_pos)
+		if dist < min_dist:
+			min_dist = dist
+			best = direction
+
+	if best == -1:
+		return false
+
+	do_move(best)
+	return true
+
+func find_nearest_option(p: Vector2, options: Array):
+	var min_dist = INF
+	var closest = null
+	for option in options:
+		var dist = p.distance_to(option["pos"])
+		if dist < min_dist:
+			min_dist = dist
+			closest = option
+	return closest
+
+func try_goal2(p) -> bool:
+	return false
+
 func try_step(p):
 	var agent = get_current_agent()
 	if agent == Agent.NONE:
@@ -280,6 +359,9 @@ func try_step(p):
 	var state = engine.get_game_state()
 	var x0 = margin_width + cell_width
 	var y0 = margin_height + cell_height
+
+	if try_goal(p):
+		return
 
 	var sx = (p.x - x0) / cell_width
 	var sy = (p.y - y0) / cell_height
