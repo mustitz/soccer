@@ -25,6 +25,17 @@ const GameStep = GameTypes.GameStep
 enum View { NORMAL, FLIPPED }
 @export var view: View = View.FLIPPED
 
+const DELTA_DIR: Array[Vector2i] = [
+	Vector2i(-1, +1),  # DIRECTION_SW = 0
+	Vector2i( 0, +1),  # DIRECTION_S  = 1
+	Vector2i(+1, +1),  # DIRECTION_SE = 2
+	Vector2i(+1,  0),  # DIRECTION_E  = 3
+	Vector2i(+1, -1),  # DIRECTION_NE = 4
+	Vector2i( 0, -1),  # DIRECTION_N  = 5
+	Vector2i(-1, -1),  # DIRECTION_NW = 6
+	Vector2i(-1,  0),  # DIRECTION_W  = 7
+]
+
 var history: Array[GameStep] = []
 var engine: EngineExtension
 var free_kick_hints: Array = [null, null, null, null, null, null, null, null]
@@ -52,6 +63,11 @@ func flip_y(y: int) -> int:
 	if view == View.FLIPPED:
 		return board_height - y
 	return y
+
+func get_delta(direction: int) -> Vector2i:
+	if direction < 0 or direction >= 8:
+		return Vector2i(0, 0)
+	return DELTA_DIR[direction]
 
 func _init():
 	engine = EngineExtension.new()
@@ -211,20 +227,10 @@ func draw_free_kick_hints():
 				free_kick_hints[direction] = null
 			continue
 
-		var dx = 0
-		var dy = 0
-		match direction:
-			engine.DIRECTION_NW: dx = -free_kick_len; dy = -free_kick_len
-			engine.DIRECTION_N:  dx = 0; dy = -free_kick_len
-			engine.DIRECTION_NE: dx = +free_kick_len; dy = -free_kick_len
-			engine.DIRECTION_E:  dx = +free_kick_len; dy = 0
-			engine.DIRECTION_SE: dx = +free_kick_len; dy = +free_kick_len
-			engine.DIRECTION_S:  dx = 0; dy = +free_kick_len
-			engine.DIRECTION_SW: dx = -free_kick_len; dy = +free_kick_len
-			engine.DIRECTION_W:  dx = -free_kick_len; dy = 0
+		var delta = free_kick_len * get_delta(direction)
 
-		var dest_x = ball_pos.x + dx
-		var dest_y = ball_pos.y + dy
+		var dest_x = ball_pos.x + delta.x
+		var dest_y = ball_pos.y + delta.y
 		var screen_x = x0 + (dest_x - 1.6) * cell_width
 		var screen_y = y0 + (flip_y(dest_y) - 1.6) * cell_height
 
@@ -323,20 +329,10 @@ func calc_direction(dx: int, dy: int) -> int:
 	return engine.DIRECTION_NONE
 
 func get_step_end(start: Vector2, step: GameStep) -> Vector2:
-	var direction_vectors = {
-		Direction.N:  Vector2( 0, -1),
-		Direction.NE: Vector2(+1, -1),
-		Direction.E:  Vector2(+1,  0),
-		Direction.SE: Vector2(+1, +1),
-		Direction.S:  Vector2( 0, +1),
-		Direction.SW: Vector2(-1, +1),
-		Direction.W:  Vector2(-1,  0),
-		Direction.NW: Vector2(-1, -1),
-	}
-	var dir_vec = direction_vectors[step.direction]
+	var delta = get_delta(step.direction)
 	if view == View.FLIPPED:
-		dir_vec.y = -dir_vec.y
-	return start + dir_vec * step.length * cell_width
+		delta.y = -delta.y
+	return start + Vector2(delta) * step.length * cell_width
 
 func update_ball_position():
 	var state = engine.get_game_state()
@@ -362,29 +358,16 @@ func put_ball(x: float, y: float):
 
 func put_ball_into_net(pre_state, direction: int, length: int):
 	var ball_pos = pre_state.ball
-	var x0 = margin_width + cell_width
-	var y0 = margin_height + cell_height
-
-	var dx = 0
-	var dy = 0
-	match direction:
-		engine.DIRECTION_NW: dx = -1; dy = -1
-		engine.DIRECTION_N:  dx = 0; dy = -1
-		engine.DIRECTION_NE: dx = 1; dy = -1
-		engine.DIRECTION_E:  dx = 1; dy = 0
-		engine.DIRECTION_SE: dx = 1; dy = 1
-		engine.DIRECTION_S:  dx = 0; dy = 1
-		engine.DIRECTION_SW: dx = -1; dy = 1
-		engine.DIRECTION_W:  dx = -1; dy = 0
+	var delta = get_delta(direction)
 
 	for i in range(length):
-		var next_x = ball_pos.x + dx
-		var next_y = ball_pos.y + dy
+		var next_x = ball_pos.x + delta.x
+		var next_y = ball_pos.y + delta.y
 		if next_y < 0 or next_y > board_height:
 			break
 		ball_pos = Vector2i(next_x, next_y)
 
-	put_ball(ball_pos.x + 0.5 * dx, ball_pos.y + 0.5 * dy)
+	put_ball(ball_pos.x + 0.5 * delta.x, ball_pos.y + 0.5 * delta.y)
 
 func do_move(direction: int):
 	var pre_state = engine.get_game_state()
