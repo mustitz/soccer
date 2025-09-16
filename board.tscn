@@ -11,6 +11,7 @@ offset_bottom = 40.0
 script = ExtResource("1_p0ybc")
 
 [node name="Ball" type="Sprite2D" parent="."]
+z_index = 1
 texture = ExtResource("2_psm7c")
 offset = Vector2(100, 100)
 hframes = 8

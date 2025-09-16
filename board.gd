@@ -340,17 +340,51 @@ func get_step_end(start: Vector2, step: GameStep) -> Vector2:
 
 func update_ball_position():
 	var state = engine.get_game_state()
-	var ball_pos = state.ball
+	if state.status != engine.GAME_IN_PROGRESS:
+		return
+
+	put_ball(state.ball.x, state.ball.y)
+
+func _on_ball_animation_timeout() -> void:
+	$Ball.frame_coords.x = ($Ball.frame_coords.x + 1) % 8
+
+func put_ball(x: float, y: float):
+	if view == View.FLIPPED:
+		y = board_height - y
+
 	var x0 = margin_width + cell_width
 	var y0 = margin_height + cell_height
 
 	$Ball.position = Vector2(
-		x0 + (ball_pos.x - 1.6) * cell_width,
-		y0 + (flip_y(ball_pos.y) - 1.6) * cell_height
+		x0 + (x - 1.6) * cell_width,
+		y0 + (y - 1.6) * cell_height
 	)
 
-func _on_ball_animation_timeout() -> void:
-	$Ball.frame_coords.x = ($Ball.frame_coords.x + 1) % 8
+func put_ball_into_net(pre_state, direction: int, length: int):
+	var ball_pos = pre_state.ball
+	var x0 = margin_width + cell_width
+	var y0 = margin_height + cell_height
+
+	var dx = 0
+	var dy = 0
+	match direction:
+		engine.DIRECTION_NW: dx = -1; dy = -1
+		engine.DIRECTION_N:  dx = 0; dy = -1
+		engine.DIRECTION_NE: dx = 1; dy = -1
+		engine.DIRECTION_E:  dx = 1; dy = 0
+		engine.DIRECTION_SE: dx = 1; dy = 1
+		engine.DIRECTION_S:  dx = 0; dy = 1
+		engine.DIRECTION_SW: dx = -1; dy = 1
+		engine.DIRECTION_W:  dx = -1; dy = 0
+
+	for i in range(length):
+		var next_x = ball_pos.x + dx
+		var next_y = ball_pos.y + dy
+		if next_y < 0 or next_y > board_height:
+			break
+		ball_pos = Vector2i(next_x, next_y)
+
+	put_ball(ball_pos.x + 0.5 * dx, ball_pos.y + 0.5 * dy)
 
 func do_move(direction: int):
 	var pre_state = engine.get_game_state()
@@ -367,7 +401,10 @@ func do_move(direction: int):
 	add_step(direction, length, player)
 
 	var state = engine.get_game_state()
-	update_ball_position()
+	if state.status == engine.GAME_IN_PROGRESS:
+		update_ball_position()
+	else:
+		put_ball_into_net(pre_state, direction, length)
 	queue_redraw()
 
 	if state.move_state != engine.MOVE_STATE_INACTIVE:
@@ -376,7 +413,6 @@ func do_move(direction: int):
 			engine.start_thinking()
 
 func _on_thinking_done(direction: int):
-	print("QAZWSX AI thinking complete, suggested move: ", direction)
 	do_move(direction)
 
 func create_goal_sprite(width: int, flipped: bool) -> Sprite2D:
