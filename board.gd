@@ -524,6 +524,7 @@ func create_goal_sprite(width: int, flipped: bool) -> Sprite2D:
 
 	var sprite = Sprite2D.new()
 	sprite.texture = texture
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
 	sprite.centered = false
 	if flipped:
 		sprite.flip_v = true
