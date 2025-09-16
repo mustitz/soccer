@@ -28,6 +28,8 @@ enum View { NORMAL, FLIPPED }
 var history: Array[GameStep] = []
 var engine: EngineExtension
 var free_kick_hints: Array = [null, null, null, null, null, null, null, null]
+var goal1: Sprite2D
+var goal2: Sprite2D
 
 enum Agent { NONE, USER, AI }
 var player1: Agent = Agent.USER
@@ -64,6 +66,11 @@ func _ready():
 	var state = engine.get_game_state()
 	dump_state(state)
 
+	goal1 = create_goal_sprite(goal_width, false)
+	goal2 = create_goal_sprite(goal_width, true)
+	add_child(goal1)
+	add_child(goal2)
+
 	update_size()
 
 	engine.thinking_done.connect(_on_thinking_done)
@@ -82,8 +89,26 @@ func update_size():
 	custom_minimum_size = Vector2(total_width, total_height)
 	size = Vector2(total_width, total_height)
 
-	const k = 1 / 64.0
-	$Ball.scale = k * Vector2(cell_width, cell_height)
+	const kball = 1 / 64.0
+	$Ball.scale = kball * Vector2(cell_width, cell_height)
+
+	var x0 = margin_width + cell_width
+	var y0 = margin_height + cell_height
+	const kgoal = 1 / 128.0
+
+	if goal1 != null:
+		goal1.scale = kgoal * Vector2(cell_width, cell_height)
+		goal1.position = Vector2(
+			x0 + (board_width / 2 - goal_width / 2) * cell_width,
+			y0 - cell_height
+		)
+
+	if goal2 != null:
+		goal2.scale = kgoal * Vector2(cell_width, cell_height)
+		goal2.position = Vector2(
+			x0 + (board_width / 2 - goal_width / 2) * cell_width,
+			y0 + board_height * cell_height
+		)
 
 	queue_redraw()
 
@@ -353,3 +378,17 @@ func do_move(direction: int):
 func _on_thinking_done(direction: int):
 	print("QAZWSX AI thinking complete, suggested move: ", direction)
 	do_move(direction)
+
+func create_goal_sprite(width: int, flipped: bool) -> Sprite2D:
+	var path = "res://assets/goal/goal_%02d.png" % width
+	var texture = load(path)
+	if texture == null:
+		print("Error: Could not load goal texture: ", path)
+		return null
+
+	var sprite = Sprite2D.new()
+	sprite.texture = texture
+	sprite.centered = false
+	if flipped:
+		sprite.flip_v = true
+	return sprite
