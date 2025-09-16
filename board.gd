@@ -77,8 +77,8 @@ func dump_state(state):
 	print("Possible steps: ", state.possible_steps)
 
 func update_size():
-	var total_width = 2 * margin_width + board_width * cell_width
-	var total_height = 2 * margin_height + board_height * cell_height
+	var total_width = 2 * margin_width + (board_width + 2) * cell_width
+	var total_height = 2 * margin_height + (board_height + 2) * cell_height
 	custom_minimum_size = Vector2(total_width, total_height)
 	size = Vector2(total_width, total_height)
 
@@ -101,8 +101,10 @@ func _draw():
 
 func draw_grid():
 	var color = grid_color
-	var start_x = margin_width
-	var start_y = margin_height
+	var x0 = margin_width + cell_width
+	var y0 = margin_height + cell_height
+	var start_x = x0
+	var start_y = y0
 
 	for x in range(board_width + 1):
 		var line_x = start_x + x * cell_width
@@ -119,18 +121,20 @@ func draw_grid():
 		draw_line(from, to, color, thick)
 
 func draw_markup():
-	var cx = margin_width + 0.5 * board_width * cell_width
-	var cy = margin_height + 0.5 * board_height * cell_height
-	var right_x = margin_width + board_width * cell_width
-	var bottom_y = margin_height + board_height * cell_height
+	var x0 = margin_width + cell_width
+	var y0 = margin_height + cell_height
+	var cx = x0 + 0.5 * board_width * cell_width
+	var cy = y0 + 0.5 * board_height * cell_height
+	var right_x = x0 + board_width * cell_width
+	var bottom_y = y0 + board_height * cell_height
 
 	draw_circle(Vector2(cx, cy), 2 * border_thick, grid_color)
-	draw_line(Vector2(margin_width, cy), Vector2(right_x, cy), grid_color, border_thick)
+	draw_line(Vector2(x0, cy), Vector2(right_x, cy), grid_color, border_thick)
 
 	var gw = goal_width * cell_width
 	var gx1 = cx - 0.5 * gw
 
-	var top_goalkeeper_rect = Rect2(gx1, margin_height, gw, cell_height)
+	var top_goalkeeper_rect = Rect2(gx1, y0, gw, cell_height)
 	draw_rect(top_goalkeeper_rect, grid_color, false, border_thick)
 
 	var bottom_goalkeeper_rect = Rect2(gx1, bottom_y, gw, -cell_height)
@@ -140,15 +144,17 @@ func draw_markup():
 	if free_kick_len >= halfy:
 		return
 
-	var px1 = max(margin_width, gx1 - (free_kick_len - 1) * cell_width)
+	var px1 = max(x0, gx1 - (free_kick_len - 1) * cell_width)
 	var pw = cell_width * (2 * free_kick_len + goal_width - 2)
 	var ph = free_kick_len * cell_height
-	draw_rect(Rect2(px1, margin_height, pw, ph), grid_color, false, border_thick)
+	draw_rect(Rect2(px1, y0, pw, ph), grid_color, false, border_thick)
 	draw_rect(Rect2(px1, bottom_y, pw, -ph), grid_color, false, border_thick)
 
 func draw_history():
-	var center_x = margin_width + 0.5 * board_width * cell_width
-	var center_y = margin_height + 0.5 * board_height * cell_height
+	var x0 = margin_width + cell_width
+	var y0 = margin_height + cell_height
+	var center_x = x0 + 0.5 * board_width * cell_width
+	var center_y = y0 + 0.5 * board_height * cell_height
 	var current_pos = Vector2(center_x, center_y)
 
 	for step in history:
@@ -170,6 +176,8 @@ func draw_free_kick_hints():
 		return
 
 	var ball_pos = state.ball
+	var x0 = margin_width + cell_width
+	var y0 = margin_height + cell_height
 
 	for direction in range(8):
 		if direction not in state.possible_steps:
@@ -192,8 +200,8 @@ func draw_free_kick_hints():
 
 		var dest_x = ball_pos.x + dx
 		var dest_y = ball_pos.y + dy
-		var screen_x = margin_width + (dest_x - 1.6) * cell_width
-		var screen_y = margin_height + (flip_y(dest_y) - 1.6) * cell_height
+		var screen_x = x0 + (dest_x - 1.6) * cell_width
+		var screen_y = y0 + (flip_y(dest_y) - 1.6) * cell_height
 
 		if free_kick_hints[direction] == null:
 			var hint_ball = $Ball.duplicate()
@@ -223,9 +231,11 @@ func try_step(p):
 		return
 
 	var state = engine.get_game_state()
+	var x0 = margin_width + cell_width
+	var y0 = margin_height + cell_height
 
-	var sx = (p.x - margin_width) / cell_width
-	var sy = (p.y - margin_height) / cell_height
+	var sx = (p.x - x0) / cell_width
+	var sy = (p.y - y0) / cell_height
 
 	var frac_sx = sx - floor(sx)
 	var frac_sy = sy - floor(sy)
@@ -306,10 +316,12 @@ func get_step_end(start: Vector2, step: GameStep) -> Vector2:
 func update_ball_position():
 	var state = engine.get_game_state()
 	var ball_pos = state.ball
+	var x0 = margin_width + cell_width
+	var y0 = margin_height + cell_height
 
 	$Ball.position = Vector2(
-		margin_width + (ball_pos.x - 1.6) * cell_width,
-		margin_height + (flip_y(ball_pos.y) - 1.6) * cell_height
+		x0 + (ball_pos.x - 1.6) * cell_width,
+		y0 + (flip_y(ball_pos.y) - 1.6) * cell_height
 	)
 
 func _on_ball_animation_timeout() -> void:
