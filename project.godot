@@ -10,7 +10,9 @@ config_version=5
 
 [application]
 
-config/name="soccer"
+config/name="Soccer on Paper"
+config/description="Abstract board logic game Soccer on Paper"
+config/version="0.0.1"
 run/main_scene="uid://dho1m6uwkidgq"
 config/features=PackedStringArray("4.4", "GL Compatibility")
 config/icon="res://icon.svg"
