@@ -5,7 +5,7 @@ extends Control
 @export var cell_size_in_mm : int = 5
 
 func _ready():
-	var mm_to_pixels = get_dpi() / 25.4
+	var mm_to_pixels = Platform.get_dpi() / 25.4
 	var cell_size = int(cell_size_in_mm * mm_to_pixels)
 
 	var panel = $VBoxContainer/Panel
@@ -20,12 +20,3 @@ func _input(event):
 		scroll.scroll_horizontal -= event.relative.x
 		scroll.scroll_vertical -= event.relative.y
 		return
-
-func get_dpi():
-	if OS.get_name() == "Android" or OS.get_name() == "iOS":
-		return DisplayServer.screen_get_dpi()
-
-	var screen_size = DisplayServer.screen_get_size()
-	var diagonal_pixels = sqrt(screen_size.x * screen_size.x + screen_size.y * screen_size.y)
-	var assumed_diagonal_inches = 17
-	return diagonal_pixels / assumed_diagonal_inches
