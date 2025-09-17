@@ -1,10 +1,46 @@
-[gd_scene load_steps=2 format=3 uid="uid://bc30bawf0x5ei"]
+[gd_scene load_steps=3 format=3 uid="uid://bc30bawf0x5ei"]
 
 [ext_resource type="Script" uid="uid://ivv8bqc6joct" path="res://desktop_main.gd" id="1_q0ht3"]
+[ext_resource type="PackedScene" uid="uid://ddvjaaio3uxly" path="res://board.tscn" id="2_ca6cs"]
 
 [node name="DesktopMain" type="Control"]
 layout_mode = 3
-anchors_preset = 0
-offset_right = 40.0
-offset_bottom = 40.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 script = ExtResource("1_q0ht3")
+
+[node name="HSplitContainer" type="HSplitContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ScrollContainer" type="ScrollContainer" parent="HSplitContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CenterContainer" type="CenterContainer" parent="HSplitContainer/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Board" parent="HSplitContainer/ScrollContainer/CenterContainer" instance=ExtResource("2_ca6cs")]
+layout_mode = 2
+
+[node name="Right" type="Control" parent="HSplitContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ColorRect" type="ColorRect" parent="HSplitContainer/Right"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.0684641, 0.184632, 0.0372429, 1)
