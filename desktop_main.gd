@@ -1,3 +1,4 @@
+class_name DesktopMain
 extends Control
 
 @export var cell_size_in_mm : int = 5
