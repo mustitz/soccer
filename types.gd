@@ -2,6 +2,7 @@ class_name GameTypes
 
 enum Direction { SW, S, SE, E, NE, N, NW, W }
 enum Player { RED, BLUE }
+enum Agent { NONE, USER, AI }
 
 class GameStep:
 	var direction: Direction

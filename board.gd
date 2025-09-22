@@ -4,6 +4,7 @@ class_name Board
 const Direction = GameTypes.Direction
 const Player = GameTypes.Player
 const GameStep = GameTypes.GameStep
+const Agent = GameTypes.Agent
 
 @export var board_width: int = 20
 @export var board_height: int = 30
@@ -42,7 +43,6 @@ var free_kick_hints: Array = [null, null, null, null, null, null, null, null]
 var goal1: Sprite2D
 var goal2: Sprite2D
 
-enum Agent { NONE, USER, AI }
 var player1: Agent = Agent.USER
 var player2: Agent = Agent.AI
 
@@ -132,6 +132,25 @@ func update_size():
 		)
 
 	queue_redraw()
+
+func new_game():
+	var result = engine.new_game(board_width + 1, board_height + 1, goal_width, free_kick_len)
+	if result != 0:
+		print("Error starting new game: ", result)
+		return
+
+	history.clear()
+
+	if player1 == Agent.AI and player2 == Agent.USER:
+		view = View.NORMAL
+	else:
+		view = View.FLIPPED
+
+	queue_redraw()
+
+	var current_agent = get_current_agent()
+	if current_agent == Agent.AI:
+		engine.start_thinking()
 
 func add_step(dir: Direction, length: int, player: Player):
 	var step = GameStep.new(dir, length, player)
