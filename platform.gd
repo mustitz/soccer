@@ -1,6 +1,7 @@
 extends Node
 
 const MOBILE_EMU = false
+const DEBUG = true
 
 var os_name: String
 var is_mobile: bool

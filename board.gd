@@ -46,6 +46,10 @@ var goal2: Sprite2D
 var player1: Agent = Agent.USER
 var player2: Agent = Agent.AI
 
+var debug_game_file: FileAccess
+var debug_game_counter: int = 1
+var debug_last_player: int = -1
+
 func get_current_agent() -> Agent:
 	var state = engine.get_game_state()
 	if state.status != engine.GAME_IN_PROGRESS:
@@ -146,11 +150,84 @@ func new_game():
 	else:
 		view = View.FLIPPED
 
+	debug_new_game_log()
+
 	queue_redraw()
 
 	var current_agent = get_current_agent()
 	if current_agent == Agent.AI:
 		engine.start_thinking()
+
+func debug_new_game_log():
+	if not Platform.DEBUG:
+		return
+
+	debug_close_game_log()
+
+	var home_dir = OS.get_environment("HOME")
+	var log_dir = home_dir + "/.paper-soccer"
+
+	if not DirAccess.dir_exists_absolute(log_dir):
+		DirAccess.open(home_dir).make_dir(".paper-soccer")
+
+	var filename = "game-%04d.soccer" % debug_game_counter
+	var filepath = log_dir + "/" + filename
+
+	# Find next available file number
+	while FileAccess.file_exists(filepath):
+		debug_game_counter += 1
+		filename = "game-%04d.soccer" % debug_game_counter
+		filepath = log_dir + "/" + filename
+
+	debug_game_counter += 1
+
+	debug_game_file = FileAccess.open(filepath, FileAccess.WRITE)
+	if debug_game_file == null:
+		print("Error creating game log file: ", filepath)
+		return
+
+	var date_time = Time.get_datetime_string_from_system()
+	var player1_str = "AI" if player1 == Agent.AI else "USER"
+	var player2_str = "AI" if player2 == Agent.AI else "USER"
+
+	debug_game_file.store_line("%s %s %s" % [player1_str, player2_str, date_time])
+	debug_game_file.store_line("GAME %d %d %d %d" % [board_width + 1, board_height + 1, goal_width, free_kick_len])
+	debug_game_file.flush()
+	debug_last_player = -1
+
+func debug_close_game_log():
+	if debug_game_file != null:
+		debug_game_file.close()
+		debug_game_file = null
+
+func debug_log_step(active_player: int, direction: int):
+	if not Platform.DEBUG or debug_game_file == null:
+		return
+
+	var direction_names = ["SW", "S", "SE", "E", "NE", "N", "NW", "W"]
+	var dir_str = direction_names[direction] if direction < direction_names.size() else str(direction)
+
+	if active_player != debug_last_player:
+		if debug_last_player != -1:
+			debug_game_file.store_line("")
+			debug_game_file.flush()
+		debug_game_file.store_string("%d %s" % [active_player, dir_str])
+		debug_last_player = active_player
+	else:
+		debug_game_file.store_string(" %s" % dir_str)
+
+func debug_log_result(result: int):
+	if not Platform.DEBUG or debug_game_file == null:
+		return
+
+	var result_str = "="
+	if result > 0:
+		result_str = "1-0"
+	if result < 0:
+		result_str = "0-1"
+	debug_game_file.store_line("")
+	debug_game_file.store_line("RESULT: %d (%s)" % [result, result_str])
+	debug_game_file.flush()
 
 func add_step(dir: Direction, length: int, player: Player):
 	var step = GameStep.new(dir, length, player)
@@ -507,6 +584,8 @@ func put_ball_into_net(pre_state, direction: int, length: int):
 
 func do_move(direction: int):
 	var pre_state = engine.get_game_state()
+	debug_log_step(pre_state.active_player, direction)
+
 	var length = 1
 	if pre_state.move_state == engine.MOVE_STATE_FREE_KICK:
 		length = free_kick_len
@@ -530,6 +609,9 @@ func do_move(direction: int):
 		var agent = get_current_agent()
 		if agent == Agent.AI:
 			engine.start_thinking()
+	else:
+		debug_log_result(state.result)
+		debug_close_game_log()
 
 func _on_thinking_done(direction: int):
 	do_move(direction)
