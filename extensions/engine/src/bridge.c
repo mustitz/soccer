@@ -84,13 +84,13 @@ int ai_step(void * ai_handle, int direction) {
     return ai->do_step(ai, direction);
 }
 
-int ai_undo(void * ai_handle) {
+int ai_undo(void * ai_handle, int count) {
     if (!ai_handle) {
         return -1;
     }
 
     struct ai * ai = (struct ai *)ai_handle;
-    return ai->undo_step(ai);
+    return ai->undo_steps(ai, count);
 }
 
 int ai_go(void * ai_handle) {

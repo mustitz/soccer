@@ -130,10 +130,10 @@ public:
         return ai->step(direction) ? OK : ERR_INVALID_PARAMETER;
     }
 
-    Error undo() {
+    Error undo(int count = 1) {
         if (!ai) return ERR_UNCONFIGURED;
 
-        return ai->undo() ? OK : ERR_INVALID_PARAMETER;
+        return ai->undo(count) ? OK : ERR_INVALID_PARAMETER;
     }
 
     int go() {
@@ -181,7 +181,7 @@ public:
             &EngineExtension::new_game);
         ClassDB::bind_method(D_METHOD("get_game_state"), &EngineExtension::get_game_state);
         ClassDB::bind_method(D_METHOD("step", "direction"), &EngineExtension::step);
-        ClassDB::bind_method(D_METHOD("undo"), &EngineExtension::undo);
+        ClassDB::bind_method(D_METHOD("undo", "count"), &EngineExtension::undo, DEFVAL(1));
         ClassDB::bind_method(D_METHOD("go"), &EngineExtension::go);
         ClassDB::bind_method(D_METHOD("start_thinking"), &EngineExtension::start_thinking);
     }

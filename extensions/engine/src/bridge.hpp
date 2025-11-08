@@ -20,7 +20,7 @@ extern "C" {
     void destroy_ai(void * ai);
     int ai_get_snapshot(void * ai, struct Snapshot * c_state);
     int ai_step(void * ai, int direction);
-    int ai_undo(void * ai);
+    int ai_undo(void * ai, int count);
     int ai_go(void * ai);
 }
 
@@ -128,12 +128,12 @@ public:
         return ai_step(_handle, direction) == 0;
     }
 
-    bool undo() {
+    bool undo(int count = 1) {
         if (!is_valid()) {
             return false;
         }
 
-        return ai_undo(_handle) == 0;
+        return ai_undo(_handle, count) == 0;
     }
 
     int go() {
