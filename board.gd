@@ -616,6 +616,48 @@ func do_move(direction: int):
 func _on_thinking_done(direction: int):
 	do_move(direction)
 
+func _unhandled_input(event):
+	if event.is_action_pressed("cancel_move"):
+		_cancel_move()
+		get_viewport().set_input_as_handled()
+
+func _cancel_move():
+	var agent = get_current_agent()
+	if agent == Agent.NONE:
+		print("Ignore cancel_move, game over")
+		return
+
+	if agent == Agent.AI:
+		print("Ignore cancel_move, AI is thinking")
+		return
+
+	var state = engine.get_game_state()
+	var current_player_id = state.active_player
+	var current_player = Player.RED if current_player_id == 1 else Player.BLUE
+
+	var steps_to_undo = 0
+	for i in range(history.size() - 1, -1, -1):
+		var step = history[i]
+		if step.player == current_player:
+			steps_to_undo += 1
+		else:
+			break
+
+	if steps_to_undo > 0:
+		var result = engine.undo(steps_to_undo)
+		if result == OK:
+			for _i in range(steps_to_undo):
+				history.pop_back()
+
+			update_ball_position()
+			clear_free_kick_hints()
+			queue_redraw()
+			print("Undid %d steps" % steps_to_undo)
+		else:
+			print("Engine failed to undo steps. Result: ", result)
+	else:
+		print("Nothing to undo for the current player.")
+
 func create_goal_sprite(width: int, flipped: bool) -> Sprite2D:
 	var path = "res://assets/goal/goal_%02d.png" % width
 	var texture = load(path)
