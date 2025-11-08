@@ -2,6 +2,6 @@
 	path = extensions/godot-cpp
 	url = https://github.com/godotengine/godot-cpp
 [submodule "extensions/engine/paper-football"]
-	path = extensions/engine/paper-football
-	url = git@github.com:mustitz/paper-football.git
+	path = extensions/engine/3-football-on-paper
+	url = git@github.com:mustitz/3-football-on-paper.git
 	branch = rus-football

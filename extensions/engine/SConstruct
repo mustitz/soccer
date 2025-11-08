@@ -16,17 +16,20 @@ build_dn = f"build/{platform}-{target}-{arch}"
 if not os.path.exists(build_dn):
     os.makedirs(build_dn)
 
-env.VariantDir(build_dn, 'paper-football/sources', duplicate=0)
+env.VariantDir(build_dn, '3-football-on-paper/sources', duplicate=0)
 
 sources = [
     "src/wrapper.cpp",
     "src/bridge.c",
     f"{build_dn}/utils.c",
+    f"{build_dn}/warns.c",
     f"{build_dn}/game.c",
-    f"{build_dn}/mcts-ai.c",
+    f"{build_dn}/enginelib.c",
+    f"{build_dn}/mcts/ai.c",
+    f"{build_dn}/mcts/dev-0003.c",
     ]
 
-env.Append(CPPPATH=["paper-football/include/"])
+env.Append(CPPPATH=["3-football-on-paper/include/"])
 
 library = env.SharedLibrary( f"bin/libengine{suffix}{ext}", source=sources)
 
