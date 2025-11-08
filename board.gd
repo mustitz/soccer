@@ -286,8 +286,8 @@ func draw_markup():
 	if free_kick_len >= halfy:
 		return
 
-	var px1 = max(x0, gx1 - (free_kick_len - 1) * cell_width)
-	var pw = cell_width * (2 * free_kick_len + goal_width - 2)
+	var px1 = max(x0, gx1 - free_kick_len * cell_width)
+	var pw = cell_width * (2 * free_kick_len + goal_width)
 	var ph = free_kick_len * cell_height
 	draw_rect(Rect2(px1, y0, pw, ph), grid_color, false, border_thick)
 	draw_rect(Rect2(px1, bottom_y, pw, -ph), grid_color, false, border_thick)
