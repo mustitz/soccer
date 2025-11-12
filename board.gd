@@ -26,6 +26,9 @@ const Agent = GameTypes.Agent
 enum View { NORMAL, FLIPPED }
 @export var view: View = View.FLIPPED
 
+@export var ai_step_delay: float = 0.2
+var ai_start_think_time: float = 0.0
+
 const DELTA_DIR: Array[Vector2i] = [
 	Vector2i(-1, +1),  # DIRECTION_SW = 0
 	Vector2i( 0, +1),  # DIRECTION_S  = 1
@@ -63,6 +66,14 @@ func get_current_agent() -> Agent:
 		_:
 			return Agent.NONE
 
+func start_ai_turn():
+	var agent = get_current_agent()
+	if agent != Agent.AI:
+		return
+
+	ai_start_think_time = 0.001 * Time.get_ticks_msec()
+	engine.start_thinking()
+
 func flip_y(y: int) -> int:
 	if view == View.FLIPPED:
 		return board_height - y
@@ -96,9 +107,7 @@ func _ready():
 	engine.thinking_done.connect(_on_thinking_done)
 
 	if state.move_state != engine.MOVE_STATE_INACTIVE:
-		var agent = get_current_agent()
-		if agent == Agent.AI:
-			engine.start_thinking()
+		start_ai_turn()
 
 func dump_state(state):
 	print("Status: ", state.status)
@@ -154,9 +163,7 @@ func new_game():
 
 	queue_redraw()
 
-	var current_agent = get_current_agent()
-	if current_agent == Agent.AI:
-		engine.start_thinking()
+	start_ai_turn()
 
 func debug_new_game_log():
 	if not Platform.DEBUG:
@@ -606,14 +613,19 @@ func do_move(direction: int):
 	queue_redraw()
 
 	if state.move_state != engine.MOVE_STATE_INACTIVE:
-		var agent = get_current_agent()
-		if agent == Agent.AI:
-			engine.start_thinking()
+		start_ai_turn()
 	else:
 		debug_log_result(state.result)
 		debug_close_game_log()
 
 func _on_thinking_done(direction: int):
+	var now: float = 0.001 * Time.get_ticks_msec()
+	var think_duration: float = now - ai_start_think_time
+
+	if think_duration < ai_step_delay:
+		var relax: float = ai_step_delay - think_duration
+		await get_tree().create_timer(relax).timeout
+
 	do_move(direction)
 
 func _unhandled_input(event):
