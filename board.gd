@@ -619,11 +619,16 @@ func do_move(direction: int):
 		debug_close_game_log()
 
 func _on_thinking_done(direction: int):
+	var state = engine.get_game_state()
+	var is_free_kick: bool = state.move_state == engine.MOVE_STATE_FREE_KICK
+	var factor: float = 2.0 if is_free_kick else 1.0
+	var limit: float = ai_step_delay * factor
+
 	var now: float = 0.001 * Time.get_ticks_msec()
 	var think_duration: float = now - ai_start_think_time
 
-	if think_duration < ai_step_delay:
-		var relax: float = ai_step_delay - think_duration
+	if think_duration < limit:
+		var relax: float = limit - think_duration
 		await get_tree().create_timer(relax).timeout
 
 	do_move(direction)
