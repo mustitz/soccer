@@ -88,11 +88,7 @@ func _init():
 	engine = EngineExtension.new()
 
 func _ready():
-	var result = engine.new_game(board_width + 1, board_height + 1, goal_width, free_kick_len)
-	if result != OK:
-		print("QAZQAZ Error: ", result)
-	else:
-		print("QAZQAZ OK!")
+	new_game()
 
 	var state = engine.get_game_state()
 	dump_state(state)
@@ -147,7 +143,12 @@ func update_size():
 	queue_redraw()
 
 func new_game():
-	var result = engine.new_game(board_width + 1, board_height + 1, goal_width, free_kick_len)
+	var def_profile = {
+		"AI": "mcts",
+		"qthink": 9000000,
+		"C": 1.1
+	}
+	var result = engine.new_game(board_width + 1, board_height + 1, goal_width, free_kick_len, def_profile)
 	if result != 0:
 		print("Error starting new game: ", result)
 		return

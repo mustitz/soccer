@@ -1,12 +1,18 @@
 #ifndef ENGINE_CPP_BRIDGE_INCLUDED
 #define ENGINE_CPP_BRIDGE_INCLUDED
 
+#include <godot_cpp/classes/ref_counted.hpp>
+#include <godot_cpp/core/class_db.hpp>
+#include <godot_cpp/variant/utility_functions.hpp>
+
 #include "bridge.h"
 
 #include <utility>
 #include <thread>
 #include <mutex>
 #include <condition_variable>
+
+using namespace godot;
 
 extern "C" {
     void * create_std_geometry(
@@ -16,12 +22,16 @@ extern "C" {
         const int penalty_len);
     void destroy_geometry(void * handle);
 
-    void * create_ai(void * geometry);
+    void * create_ai(void * geometry, const char * ai_type_name);
     void destroy_ai(void * ai);
     int ai_get_snapshot(void * ai, struct Snapshot * c_state);
     int ai_step(void * ai, int direction);
     int ai_undo(void * ai, int count);
     int ai_go(void * ai);
+
+    int ai_set_param_u32(void *ai_handle, const char *name, uint32_t value);
+    int ai_set_param_i32(void *ai_handle, const char *name, int32_t value);
+    int ai_set_param_f32(void *ai_handle, const char *name, float value);
 }
 
 
@@ -94,11 +104,9 @@ private:
 
 class AI {
 public:
-    AI(std::shared_ptr<Geometry> geometry) : _geometry(geometry), _handle(nullptr) {
-        if (_geometry && _geometry->is_valid()) {
-            _handle = create_ai(_geometry->_handle);
-        }
-    }
+    AI() : _geometry(nullptr), _handle(nullptr) {}
+
+    Error load(std::shared_ptr<Geometry> geometry, const Dictionary& profile);
 
     ~AI() {
         if (_handle) {
@@ -143,6 +151,29 @@ public:
 
         return ai_go(_handle);
     }
+
+    bool set_param_u32(const char *name, uint32_t value) {
+        if (!is_valid()) {
+            return false;
+        }
+        return ai_set_param_u32(_handle, name, value) == 0;
+    }
+
+    bool set_param_i32(const char *name, int32_t value) {
+        if (!is_valid()) {
+            return false;
+        }
+        return ai_set_param_i32(_handle, name, value) == 0;
+    }
+
+    bool set_param_f32(const char *name, float value) {
+        if (!is_valid()) {
+            return false;
+        }
+        return ai_set_param_f32(_handle, name, value) == 0;
+    }
+
+    Error load_profile(const Dictionary& profile);
 
 private:
     std::shared_ptr<Geometry> _geometry;

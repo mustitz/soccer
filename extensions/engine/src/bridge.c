@@ -1,22 +1,27 @@
 #include "paper-football.h"
 #include "bridge.h"
 
-void * create_ai(void * geometry) {
-    if (!geometry) {
+void * create_ai(void * geometry, const char * ai_type_name) {
+    if (!geometry || !ai_type_name) {
         return NULL;
     }
 
-    struct ai * ai = malloc(sizeof(struct ai));
-    if (!ai) {
-        return NULL;
+    const struct ai_desc * ptr = ai_list;
+    for (; ptr->name; ++ptr) {
+        if (strcmp(ptr->name, ai_type_name) == 0) {
+            struct ai * ai = (struct ai *)malloc(sizeof(struct ai));
+            if (!ai) {
+                return NULL;
+            }
+            if (ptr->init_ai(ai, (struct geometry *)geometry) != 0) {
+                free(ai);
+                return NULL;
+            }
+            return ai;
+        }
     }
 
-    if (init_mcts_ai(ai, (struct geometry *)geometry) != 0) {
-        free(ai);
-        return NULL;
-    }
-
-    return ai;
+    return NULL;
 }
 
 void destroy_ai(void * ai_handle) {
@@ -101,4 +106,37 @@ int ai_go(void * ai_handle) {
     struct ai * ai = (struct ai *)ai_handle;
     enum step result = ai->go(ai, NULL);
     return (int)result;
+}
+
+int ai_set_param_u32(void *ai_handle, const char *name, uint32_t value) {
+    if (!ai_handle || !name) {
+        return -1;
+    }
+    struct ai * ai = (struct ai *)ai_handle;
+    if (!ai->set_param) {
+        return -1;
+    }
+    return ai->set_param(ai, name, &value);
+}
+
+int ai_set_param_i32(void *ai_handle, const char *name, int32_t value) {
+    if (!ai_handle || !name) {
+        return -1;
+    }
+    struct ai * ai = (struct ai *)ai_handle;
+    if (!ai->set_param) {
+        return -1;
+    }
+    return ai->set_param(ai, name, &value);
+}
+
+int ai_set_param_f32(void *ai_handle, const char *name, float value) {
+    if (!ai_handle || !name) {
+        return -1;
+    }
+    struct ai * ai = (struct ai *)ai_handle;
+    if (!ai->set_param) {
+        return -1;
+    }
+    return ai->set_param(ai, name, &value);
 }
