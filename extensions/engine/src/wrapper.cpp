@@ -144,24 +144,22 @@ class EngineExtension : public RefCounted {
     GDCLASS(EngineExtension, RefCounted)
 
 public:
-    EngineExtension() : ai(nullptr) {
-        thinker = std::thread(&EngineExtension::think_loop, this);
-    }
+    EngineExtension() : ai(nullptr) {}
 
     ~EngineExtension() {
-        {
-            std::lock_guard<std::mutex> lock(mutex);
-            basta = true;
-        }
-        cv.notify_one();
-        thinker.join();
-
         release();
     }
 
+    void free_ai() {
+        if (ai) {
+            ai->detach();
+            ai = nullptr;
+        }
+    }
+
     void release() {
+        free_ai();
         geometry = nullptr;
-        ai = nullptr;
     }
 
     Error new_game(
@@ -176,16 +174,15 @@ public:
             return from_errno(ERR_CANT_CREATE);
         }
 
-        auto new_ai = std::make_unique<AI>();
+        auto new_ai = AI::create(get_instance_id());
         Error error = new_ai->load(new_geometry, profile);
         if (error != OK) {
             return error;
         }
 
         release();
-
         geometry = std::move(new_geometry);
-        ai = std::move(new_ai);
+        ai = new_ai;
         return OK;
     }
 
@@ -208,20 +205,9 @@ public:
         return ai->undo(count) ? OK : ERR_INVALID_PARAMETER;
     }
 
-    int go() {
-        if (!ai) return -1;
-
-        return ai->go();
-    }
-
-    void start_thinking() {
-        if (!ai) return;
-
-        std::lock_guard<std::mutex> lock(mutex);
-        if (busy) return;
-
-        busy = true;
-        cv.notify_one();
+    Error start_thinking() {
+        if (!ai) return ERR_UNCONFIGURED;
+        return ai->go() ? OK : ERR_BUSY;
     }
 
     static void _bind_methods() {
@@ -254,38 +240,12 @@ public:
         ClassDB::bind_method(D_METHOD("get_game_state"), &EngineExtension::get_game_state);
         ClassDB::bind_method(D_METHOD("step", "direction"), &EngineExtension::step);
         ClassDB::bind_method(D_METHOD("undo", "count"), &EngineExtension::undo, DEFVAL(1));
-        ClassDB::bind_method(D_METHOD("go"), &EngineExtension::go);
         ClassDB::bind_method(D_METHOD("start_thinking"), &EngineExtension::start_thinking);
     }
 
 private:
     std::shared_ptr<Geometry> geometry;
-    std::unique_ptr<AI> ai;
-
-    std::thread thinker;
-    std::condition_variable cv;
-    std::mutex mutex;
-    bool busy{false};
-    bool basta{false};
-
-    void think_loop() {
-        for (;;) {
-            {
-                std::unique_lock<std::mutex> lock(mutex);
-                cv.wait(lock, [this]{ return busy || basta; });
-                if (basta) break;
-            }
-
-            int result = ai->go();
-
-            {
-                std::lock_guard<std::mutex> lock(mutex);
-                busy = false;
-            }
-
-            call_deferred("emit_signal", "thinking_done", result);
-        }
-    }
+    std::shared_ptr<AI> ai;
 };
 
 void initialize_engine_extension_module(ModuleInitializationLevel p_level) {
