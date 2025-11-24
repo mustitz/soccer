@@ -34,6 +34,15 @@ extern "C" {
     int ai_set_param_f32(void *ai_handle, const char *name, float value);
 }
 
+static Error status_to_error(int status, Error def) {
+    switch (status) {
+        case 0: return OK;
+        case ENOMEM: return ERR_OUT_OF_MEMORY;
+        case EINVAL: return ERR_INVALID_PARAMETER;
+        default: return def;
+    }
+}
+
 
 
 class Geometry {
@@ -137,20 +146,26 @@ public:
         snapshot.ball_coords[1] = coords.second;
     }
 
-    bool step(int direction) {
+    Error step(int direction) {
         if (!is_valid()) {
-            return false;
+            return ERR_UNCONFIGURED;
+        }
+        if (thinking.load()) {
+            return ERR_BUSY;
         }
 
-        return ai_step(_handle, direction) == 0;
+        return status_to_error(ai_step(_handle, direction), FAILED);
     }
 
-    bool undo(int count = 1) {
+    Error undo(int count = 1) {
         if (!is_valid()) {
-            return false;
+            return ERR_UNCONFIGURED;
+        }
+        if (thinking.load()) {
+            return ERR_BUSY;
         }
 
-        return ai_undo(_handle, count) == 0;
+        return status_to_error(ai_undo(_handle, count), FAILED);
     }
 
     bool go() {

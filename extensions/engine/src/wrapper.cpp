@@ -7,11 +7,7 @@
 using namespace godot;
 
 static Error from_errno(Error def) {
-   switch (errno) {
-        case ENOMEM: return ERR_OUT_OF_MEMORY;
-        case EINVAL: return ERR_INVALID_PARAMETER;
-        default: return def;
-    }
+    return status_to_error(errno, def);
 }
 
 Error AI::load(std::shared_ptr<Geometry> geometry, const Dictionary& profile) {
@@ -196,13 +192,13 @@ public:
     Error step(int direction) {
         if (!ai) return ERR_UNCONFIGURED;
 
-        return ai->step(direction) ? OK : ERR_INVALID_PARAMETER;
+        return ai->step(direction);
     }
 
     Error undo(int count = 1) {
         if (!ai) return ERR_UNCONFIGURED;
 
-        return ai->undo(count) ? OK : ERR_INVALID_PARAMETER;
+        return ai->undo(count);
     }
 
     Error start_thinking() {
