@@ -1,0 +1,7 @@
+[gd_resource type="Theme" format=3 uid="uid://ko3jble1mxf0"]
+
+[resource]
+default_font_size = 32
+Button/font_sizes/font_size = 32
+Label/font_sizes/font_size = 32
+Label/fonts/font = null

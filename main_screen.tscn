@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://dho1m6uwkidgq"]
+[gd_scene load_steps=3 format=3 uid="uid://dho1m6uwkidgq"]
 
 [ext_resource type="Script" uid="uid://b40m13b2ppqhv" path="res://main_screen.gd" id="1_tjn2e"]
+[ext_resource type="Theme" uid="uid://ko3jble1mxf0" path="res://assets/def.tres" id="2_w0p2i"]
 
 [node name="MainScreen" type="Control"]
 layout_mode = 3
@@ -25,22 +26,22 @@ theme_override_constants/separation = 20
 
 [node name="Title" type="Label" parent="CenterContainer/VBoxContainer"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 32
+theme = ExtResource("2_w0p2i")
 text = "Soccer"
 
 [node name="NewGameBtn" type="Button" parent="CenterContainer/VBoxContainer"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 32
+theme = ExtResource("2_w0p2i")
 text = "New Game"
 
 [node name="SettingsBtn" type="Button" parent="CenterContainer/VBoxContainer"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 32
+theme = ExtResource("2_w0p2i")
 text = "Settings..."
 
 [node name="ExitBtn" type="Button" parent="CenterContainer/VBoxContainer"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 32
+theme = ExtResource("2_w0p2i")
 text = "Exit"
 
 [node name="Spacer" type="Control" parent="CenterContainer/VBoxContainer"]
