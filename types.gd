@@ -24,8 +24,10 @@ class GameStep:
 	var direction: Direction
 	var length: int
 	var player: Player
+	var ball: Vector2i
 
-	func _init(_direction: Direction, _length: int, _player: Player):
+	func _init(_direction: Direction, _length: int, _player: Player, _ball: Vector2i):
 		direction = _direction
 		length = _length
 		player = _player
+		ball = _ball

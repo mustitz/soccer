@@ -249,8 +249,8 @@ func debug_log_result(result: int):
 	debug_game_file.store_line("RESULT: %d (%s)" % [result, result_str])
 	debug_game_file.flush()
 
-func add_step(dir: Direction, length: int, player: Player):
-	var step = GameStep.new(dir, length, player)
+func add_step(dir: Direction, length: int, player: Player, ball: Vector2i):
+	var step = GameStep.new(dir, length, player, ball)
 	history.append(step)
 
 func _draw():
@@ -616,9 +616,9 @@ func do_move(direction: int):
 		print("Invalid move!")
 		return
 
-	add_step(direction, length, player)
-
 	var state = engine.get_game_state()
+	add_step(direction, length, player, state.ball)
+
 	if state.status == engine.GAME_IN_PROGRESS:
 		update_ball_position()
 	else:
