@@ -1,0 +1,47 @@
+[gd_scene load_steps=3 format=3 uid="uid://cp3qimj7tbjxr"]
+
+[ext_resource type="Script" uid="uid://b3y82u5c7obcr" path="res://protocol.gd" id="1_51hql"]
+[ext_resource type="Theme" uid="uid://ko3jble1mxf0" path="res://assets/def.tres" id="1_p0q73"]
+
+[node name="Control" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_51hql")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 15
+theme_override_constants/margin_top = 15
+theme_override_constants/margin_right = 15
+theme_override_constants/margin_bottom = 15
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+
+[node name="Head" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Panel" type="Panel" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Tail" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="UndoBtn" type="Button" parent="MarginContainer/VBoxContainer/Tail"]
+layout_mode = 2
+size_flags_horizontal = 6
+size_flags_vertical = 4
+theme = ExtResource("1_p0q73")
+text = "Undo"
+
+[connection signal="pressed" from="MarginContainer/VBoxContainer/Tail/UndoBtn" to="." method="_on_undo_btn_pressed"]

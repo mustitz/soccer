@@ -24,7 +24,7 @@ static func new_game(first_player: GameTypes.Agent, second_player: GameTypes.Age
 	board.player2 = second_player
 	board.new_game()
 
-	set_scene("res://desktop/main_menu.tscn")
+	set_scene("res://protocol.tscn")
 
 static func set_scene(scene_path: String):
 	var desktop_main = Engine.get_main_loop().get_first_node_in_group("desktop_main")

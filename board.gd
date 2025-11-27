@@ -53,6 +53,18 @@ var debug_game_file: FileAccess
 var debug_game_counter: int = 1
 var debug_last_player: int = -1
 
+var protocol: Protocol
+
+static func get_board() -> Board:
+	return GameTypes.get_singleton_from_group("board") as Board
+
+func update_protocol() -> bool:
+	if not is_instance_valid(protocol) or not protocol.is_inside_tree():
+		protocol = Protocol.get_protocol()
+	if protocol:
+		protocol.update()
+	return protocol != null
+
 func get_current_agent() -> Agent:
 	var state = engine.get_game_state()
 	if state.status != engine.GAME_IN_PROGRESS:
@@ -88,6 +100,7 @@ func _init():
 	engine = EngineExtension.new()
 
 func _ready():
+	add_to_group("board")
 	new_game()
 
 	var state = engine.get_game_state()
@@ -161,10 +174,9 @@ func new_game():
 		view = View.FLIPPED
 
 	debug_new_game_log()
-
 	queue_redraw()
-
 	start_ai_turn()
+	update_protocol()
 
 func debug_new_game_log():
 	if not Platform.DEBUG:
@@ -619,6 +631,8 @@ func do_move(direction: int):
 		debug_log_result(state.result)
 		debug_close_game_log()
 
+	update_protocol()
+
 func _on_thinking_done(direction: int):
 	var state = engine.get_game_state()
 	var is_free_kick: bool = state.move_state == engine.MOVE_STATE_FREE_KICK
@@ -671,6 +685,7 @@ func _cancel_move():
 			clear_free_kick_hints()
 			queue_redraw()
 			print("Undid %d steps" % steps_to_undo)
+			update_protocol()
 		else:
 			print("Engine failed to undo steps. Result: ", result)
 	else:
