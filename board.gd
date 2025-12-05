@@ -41,6 +41,9 @@ const DELTA_DIR: Array[Vector2i] = [
 ]
 
 var history: Array[GameStep] = []
+var center: Vector2i
+var ihistory: int = -1
+
 var engine: EngineExtension
 var free_kick_hints: Array = [null, null, null, null, null, null, null, null]
 var goal1: Sprite2D
@@ -167,6 +170,9 @@ func new_game():
 		return
 
 	history.clear()
+	var state = engine.get_game_state()
+	center = state.ball
+	print("Center: ", center)
 
 	if player1 == Agent.AI and player2 == Agent.USER:
 		view = View.NORMAL
@@ -319,11 +325,18 @@ func draw_history():
 	var center_y = y0 + 0.5 * board_height * cell_height
 	var current_pos = Vector2(center_x, center_y)
 
+	var imax: int = history.size() if ihistory < 0 else ihistory
+	var i: int = 0
 	for step in history:
+		if i >= imax:
+			break
+		i = i + 1
+
 		var end_pos = get_step_end(current_pos, step)
 		var color = Color.RED if step.player == Player.RED else Color.BLUE
 		draw_line(current_pos, end_pos, color, step_thick)
 		current_pos = end_pos
+
 
 func clear_free_kick_hints():
 	for i in range(8):
@@ -465,6 +478,11 @@ func find_nearest_option(p: Vector2, options: Array):
 	return closest
 
 func try_step(p):
+	if ihistory >= 0:
+		ihistory = -1
+		queue_redraw()
+		return
+
 	var agent = get_current_agent()
 	if agent == Agent.NONE:
 		print("Ignore click, game over")
@@ -568,11 +586,23 @@ func get_step_end(start: Vector2, step: GameStep) -> Vector2:
 	return start + k * Vector2(delta) * length * cell_width
 
 func update_ball_position():
-	var state = engine.get_game_state()
-	if state.status != engine.GAME_IN_PROGRESS:
+	var i: int = ihistory
+	if i < 0:
+		i = history.size()
+
+	if i == 0:
+		put_ball(center.x, center.y)
 		return
 
-	put_ball(state.ball.x, state.ball.y)
+	var last_step = history[i - 1]
+	var ball: Vector2i = last_step.ball
+
+	if ball.x >= 0:
+		put_ball(ball.x, ball.y)
+		return
+
+	var prev_ball: Vector2i = center if i == 1 else history[i - 2].ball
+	put_ball_into_net(prev_ball, last_step.direction, last_step.length)
 
 func _on_ball_animation_timeout() -> void:
 	$Ball.frame_coords.x = ($Ball.frame_coords.x + 1) % 8
@@ -589,18 +619,17 @@ func put_ball(x: float, y: float):
 		y0 + (y - 1.6) * cell_height
 	)
 
-func put_ball_into_net(pre_state, direction: int, length: int):
-	var ball_pos = pre_state.ball
+func put_ball_into_net(ball: Vector2i, direction: int, length: int):
 	var delta = get_delta(direction)
 
 	for i in range(length):
-		var next_x = ball_pos.x + delta.x
-		var next_y = ball_pos.y + delta.y
+		var next_x = ball.x + delta.x
+		var next_y = ball.y + delta.y
 		if next_y < 0 or next_y > board_height:
 			break
-		ball_pos = Vector2i(next_x, next_y)
+		ball = Vector2i(next_x, next_y)
 
-	put_ball(ball_pos.x + 0.5 * delta.x, ball_pos.y + 0.5 * delta.y)
+	put_ball(ball.x + 0.5 * delta.x, ball.y + 0.5 * delta.y)
 
 func do_move(direction: int):
 	var pre_state = engine.get_game_state()
@@ -618,11 +647,7 @@ func do_move(direction: int):
 
 	var state = engine.get_game_state()
 	add_step(direction, length, player, state.ball)
-
-	if state.status == engine.GAME_IN_PROGRESS:
-		update_ball_position()
-	else:
-		put_ball_into_net(pre_state, direction, length)
+	update_ball_position()
 	queue_redraw()
 
 	if state.move_state != engine.MOVE_STATE_INACTIVE:
