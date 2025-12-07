@@ -230,8 +230,7 @@ func debug_log_step(active_player: int, direction: int):
 	if not Platform.DEBUG or debug_game_file == null:
 		return
 
-	var direction_names = ["SW", "S", "SE", "E", "NE", "N", "NW", "W"]
-	var dir_str = direction_names[direction] if direction < direction_names.size() else str(direction)
+	var dir_str = GameTypes.step_name(direction)
 
 	if active_player != debug_last_player:
 		if debug_last_player != -1:

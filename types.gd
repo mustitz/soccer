@@ -4,6 +4,13 @@ enum Direction { SW, S, SE, E, NE, N, NW, W }
 enum Player { RED, BLUE }
 enum Agent { NONE, USER, AI }
 
+const STEP_NAMES = ["SW", "S", "SE", "E", "NE", "N", "NW", "W"]
+
+static func step_name(direction: Direction) -> String:
+	if direction < STEP_NAMES.size():
+		return STEP_NAMES[direction]
+	return "Step(%d)" % direction
+
 static func get_singleton_from_group(group_name: String):
 	var nodes = Engine.get_main_loop().get_nodes_in_group(group_name)
 
