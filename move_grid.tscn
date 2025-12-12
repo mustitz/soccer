@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3 uid="uid://4mnsss0ucd2h"]
+
+[ext_resource type="Script" uid="uid://257irvoi4ysc" path="res://move_grid.gd" id="1_so3yf"]
+
+[node name="Control" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+size_flags_horizontal = 3
+script = ExtResource("1_so3yf")

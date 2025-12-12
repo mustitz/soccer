@@ -1,7 +1,7 @@
 class_name GameTypes
 
 enum Direction { SW, S, SE, E, NE, N, NW, W }
-enum Player { RED, BLUE }
+enum Player { RED, BLUE, INACTIVE }
 enum Agent { NONE, USER, AI }
 
 const STEP_NAMES = ["SW", "S", "SE", "E", "NE", "N", "NW", "W"]
