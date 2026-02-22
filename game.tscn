@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3 uid="uid://4ihi7y3cy0qy"]
 
-[ext_resource type="Script" uid="uid://bkidw66csykcx" path="res://game.gd" id="1_80nbo"]
+[ext_resource type="Script" path="res://game.gd" id="1_80nbo"]
 [ext_resource type="PackedScene" uid="uid://ddvjaaio3uxly" path="res://board.tscn" id="2_e2o6t"]
 
 [node name="Game" type="Control" node_paths=PackedStringArray("board", "scroll")]

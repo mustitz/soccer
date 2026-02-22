@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3 uid="uid://ddvjaaio3uxly"]
 
-[ext_resource type="Script" uid="uid://dmhupbj4ghxlj" path="res://board.gd" id="1_p0ybc"]
+[ext_resource type="Script" path="res://board.gd" id="1_p0ybc"]
 [ext_resource type="Texture2D" uid="uid://d105ftok6nb6k" path="res://assets/ball_spritesheet.png" id="2_psm7c"]
 
 [node name="Board" type="Control"]

@@ -1,9 +1,9 @@
 [gd_scene load_steps=5 format=3 uid="uid://cp3qimj7tbjxr"]
 
-[ext_resource type="Script" uid="uid://b3y82u5c7obcr" path="res://protocol.gd" id="1_51hql"]
+[ext_resource type="Script" path="res://protocol.gd" id="1_51hql"]
 [ext_resource type="Theme" uid="uid://ko3jble1mxf0" path="res://assets/def.tres" id="1_p0q73"]
 [ext_resource type="Theme" uid="uid://dhucle0c8dbc6" path="res://assets/protocol.tres" id="1_ygs0a"]
-[ext_resource type="Script" uid="uid://257irvoi4ysc" path="res://move_grid.gd" id="3_0g7dq"]
+[ext_resource type="Script" path="res://move_grid.gd" id="3_0g7dq"]
 
 [node name="Control" type="Control"]
 layout_mode = 3

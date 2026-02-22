@@ -1,9 +1,10 @@
 [configuration]
 
 entry_symbol = "engine_extension_library_init"
-compatibility_minimum = "4.4"
+compatibility_minimum = "4.5"
 
 [libraries]
 
+linux.debug.x86_64 = "res://extensions/engine/bin/libengine.linux.template_debug.x86_64.so"
 macos.debug = "res://extensions/engine/bin/libengine.macos.template_debug.universal.dylib"
 android.debug.arm64 = "res://extensions/engine/bin/libengine.android.template_debug.arm64.so"
